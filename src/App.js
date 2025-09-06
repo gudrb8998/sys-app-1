@@ -1,15 +1,20 @@
-import React, { useEffect } from "react";
-import { db } from "./firebase";
+// src/App.js
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Main from "./Main";
+import Question from "./Question";
 
 function App() {
-  useEffect(() => {
-    console.log("Firestore DB:", db);
-  }, []);
-
   return (
-    <div>
-      <h1>Firebase + React Test</h1>
-    </div>
+    <Router>
+      <nav>
+        <Link to="/">Main</Link> | <Link to="/question">Question</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Main />} />
+        <Route path="/question" element={<Question />} />
+      </Routes>
+    </Router>
   );
 }
 
