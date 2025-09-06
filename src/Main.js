@@ -11,20 +11,21 @@ import {
 import { db, answersCollection } from './firebase';
 import './Main.css';
 
-const getRandomStyle = (isLeft) => {
-  const minFont = 40;
-  const maxFont = 100;
+const getRandomStyle = () => {
+  const minFont = 24;
+  const maxFont = 80;
   const fontSize = Math.floor(Math.random() * (maxFont - minFont + 1)) + minFont;
 
-  // HSL 랜덤 색상
+  // 랜덤 색상
   const hue = Math.floor(Math.random() * 360);
-  const saturation = Math.floor(Math.random() * 51) + 50; // 50~100%
-  const lightness = Math.floor(Math.random() * 31) + 40; // 40~70%
+  const saturation = Math.floor(Math.random() * 51) + 50;
+  const lightness = Math.floor(Math.random() * 31) + 40;
   const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 
-  const top = Math.random() * 80;      // 영역 내 세로 위치
-  const left = Math.random() * 100;    // 영역 내부 0~100%
-  const isVertical = Math.random() < 0.5;
+  // 영역 내 랜덤 좌표
+  const top = Math.random() * 80;      // 0~80%
+  const left = Math.random() * 80;     // 0~80%
+  const isVertical = Math.random() < 0.3;
 
   return { fontSize, color, top: `${top}%`, left: `${left}%`, isVertical };
 };
@@ -38,7 +39,7 @@ const Main = () => {
     const unsubscribe1 = onSnapshot(q1, (snapshot) => {
       const newAnswers = snapshot.docs
         .filter(doc => !leftAnswers.some(a => a.id === doc.id))
-        .map(doc => ({ id: doc.id, text: doc.data().text, style: getRandomStyle(true) }));
+        .map(doc => ({ id: doc.id, text: doc.data().text, style: getRandomStyle() }));
       if (newAnswers.length > 0) setLeftAnswers(prev => [...prev, ...newAnswers]);
     });
 
@@ -46,7 +47,7 @@ const Main = () => {
     const unsubscribe2 = onSnapshot(q2, (snapshot) => {
       const newAnswers = snapshot.docs
         .filter(doc => !rightAnswers.some(a => a.id === doc.id))
-        .map(doc => ({ id: doc.id, text: doc.data().text, style: getRandomStyle(false) }));
+        .map(doc => ({ id: doc.id, text: doc.data().text, style: getRandomStyle() }));
       if (newAnswers.length > 0) setRightAnswers(prev => [...prev, ...newAnswers]);
     });
 
@@ -75,7 +76,12 @@ const Main = () => {
           <div
             key={a.id}
             className={`floating-text ${a.style.isVertical ? 'vertical' : ''}`}
-            style={{ ...a.style }}
+            style={{ 
+              fontSize: `${a.style.fontSize}px`,
+              color: a.style.color,
+              top: a.style.top,
+              left: a.style.left
+            }}
           >
             {a.text}
           </div>
@@ -88,7 +94,12 @@ const Main = () => {
           <div
             key={a.id}
             className={`floating-text ${a.style.isVertical ? 'vertical' : ''}`}
-            style={{ ...a.style }}
+            style={{ 
+              fontSize: `${a.style.fontSize}px`,
+              color: a.style.color,
+              top: a.style.top,
+              left: a.style.left
+            }}
           >
             {a.text}
           </div>

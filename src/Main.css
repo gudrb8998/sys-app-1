@@ -23,28 +23,26 @@
 
 /* 좌/우 영역 */
 .left-area, .right-area {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  position: relative;
   width: 50%;
-  overflow: hidden;
+  height: 100%;
+  overflow: hidden; /* 글자가 영역 밖으로 안 나가도록 */
 }
 
-.left-area { left: 0; }
-.right-area { right: 0; }
+.left-area { float: left; }
+.right-area { float: right; }
 
 /* 글자 스타일 */
 .floating-text {
-  position: absolute;
-  opacity: 0;
-  animation: fadeIn 2s forwards;
+  position: absolute; /* fadeIn + 랜덤 위치 유지 */
   white-space: normal;
   word-break: break-word;
-  box-sizing: border-box;
-  max-width: 100%;
+  max-width: 90%;     /* 영역 안에서 잘림 방지 */
   overflow-wrap: break-word;
+  animation: fadeIn 1s forwards;
 }
 
+/* 세로 글자 */
 .floating-text.vertical {
   writing-mode: vertical-rl;
   text-orientation: upright;
@@ -60,9 +58,11 @@
   width: 2px;
   height: 100%;
   background-color: #aaa;
+  z-index: 500;
 }
 
 /* 애니메이션 */
 @keyframes fadeIn {
+  from { opacity: 0; }
   to { opacity: 1; }
 }
