@@ -1,4 +1,3 @@
-// Main.js
 import React, { useEffect, useState } from 'react';
 import { 
   collection, 
@@ -23,8 +22,8 @@ const getRandomStyle = (isLeft) => {
   const lightness = Math.floor(Math.random() * 31) + 40; // 40~70%
   const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 
-  const top = Math.random() * 80; // 화면 내 위치
-  const left = isLeft ? Math.random() * 50 : 50 + Math.random() * 50; // 좌/우 영역
+  const top = Math.random() * 80;      // 영역 내 세로 위치
+  const left = Math.random() * 100;    // 영역 내부 0~100%
   const isVertical = Math.random() < 0.5;
 
   return { fontSize, color, top: `${top}%`, left: `${left}%`, isVertical };
@@ -57,37 +56,44 @@ const Main = () => {
     };
   }, [leftAnswers, rightAnswers]);
 
-const handleClear = async () => {
-  const snapshot = await getDocs(answersCollection); // getDocs 사용
-  const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, 'answers', d.id)));
-  await Promise.all(deletePromises);
+  const handleClear = async () => {
+    const snapshot = await getDocs(answersCollection);
+    const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, 'answers', d.id)));
+    await Promise.all(deletePromises);
 
-  setLeftAnswers([]);
-  setRightAnswers([]);
-};
+    setLeftAnswers([]);
+    setRightAnswers([]);
+  };
+
   return (
     <div className="main-container">
       <button className="clear-btn" onClick={handleClear}>데이터 초기화</button>
 
-      {leftAnswers.map(a => (
-        <div
-          key={a.id}
-          className={`floating-text left ${a.style.isVertical ? 'vertical' : ''}`}
-          style={{ ...a.style }}
-        >
-          {a.text}
-        </div>
-      ))}
+      {/* 왼쪽 영역 */}
+      <div className="left-area">
+        {leftAnswers.map(a => (
+          <div
+            key={a.id}
+            className={`floating-text ${a.style.isVertical ? 'vertical' : ''}`}
+            style={{ ...a.style }}
+          >
+            {a.text}
+          </div>
+        ))}
+      </div>
 
-      {rightAnswers.map(a => (
-        <div
-          key={a.id}
-          className={`floating-text right ${a.style.isVertical ? 'vertical' : ''}`}
-          style={{ ...a.style }}
-        >
-          {a.text}
-        </div>
-      ))}
+      {/* 오른쪽 영역 */}
+      <div className="right-area">
+        {rightAnswers.map(a => (
+          <div
+            key={a.id}
+            className={`floating-text ${a.style.isVertical ? 'vertical' : ''}`}
+            style={{ ...a.style }}
+          >
+            {a.text}
+          </div>
+        ))}
+      </div>
 
       <div className="center-line"></div>
     </div>
