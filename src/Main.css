@@ -34,22 +34,22 @@
 
 /* 글자 스타일 */
 .floating-text {
-  position: absolute; /* fadeIn + 랜덤 위치 유지 */
+  position: absolute;
   white-space: normal;
   word-break: break-word;
-  max-width: 90%;     /* 영역 안에서 잘림 방지 */
+  max-width: 90%;
   overflow-wrap: break-word;
   animation: fadeIn 1s forwards;
+  font-family: 'Paperlogy', sans-serif; /* 글자 전용 */
 }
 
 /* 세로 글자 */
 .floating-text.vertical {
-  writing-mode: vertical-rl;
+  writing-mode: vertical-lr;   /* ← 여기 rl → lr 로 변경 */
   text-orientation: upright;
   max-width: none;
   max-height: 80%;
 }
-
 /* 중앙선 */
 .center-line {
   position: absolute;
