@@ -1,50 +1,67 @@
+/* Main.css */
 .main-container {
   position: relative;
   width: 100%;
   height: 100vh;
-  background-color: #f0f0f0;
   overflow: hidden;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Nanum Brush Script', cursive;
+  background-color: #f5f5f5;
 }
 
-.center-line {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 2px;
-  height: 100%;
-  background-color: #999;
-}
-
-/* 데이터 초기화 버튼 */
-.clear-button {
+.clear-btn {
   position: absolute;
   top: 10px;
   left: 10px;
-  padding: 8px 12px;
-  background-color: #ff4d4f;
-  color: white;
+  padding: 8px 15px;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
+  background-color: #ff5c5c;
+  color: white;
   font-weight: bold;
-  z-index: 100;
-  transition: background 0.2s;
-}
-
-.clear-button:hover {
-  background-color: #d9363e;
+  cursor: pointer;
+  z-index: 1000;
 }
 
 .floating-text {
   position: absolute;
-  font-size: 18px;
-  font-weight: bold;
   opacity: 0;
-  animation: fadeIn 1.5s forwards;
-  transition: transform 0.5s;
-  pointer-events: none;
-  color: #333;
+  animation: fadeIn 2s forwards;
+  white-space: normal;         /* 줄바꿈 허용 */
+  word-break: break-word;      /* 긴 단어 줄바꿈 */
+  box-sizing: border-box;
+  max-width: 45%;              /* 각 영역 최대 너비 */
+  overflow-wrap: break-word;   /* 긴 단어 줄바꿈 */
+}
+
+.floating-text.left {
+  left: 0;
+  text-align: left;
+}
+
+.floating-text.right {
+  right: 0;
+  text-align: left;
+}
+
+.floating-text.vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  max-width: none; /* 세로 글자는 width 제한 제거 */
+  max-height: 80%; /* 세로 영역 제한 */
+}
+
+.floating-text.right.vertical {
+  text-align: right;
+}
+
+
+.center-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background-color: #aaa;
 }
 
 @keyframes fadeIn {
