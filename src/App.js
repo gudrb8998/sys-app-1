@@ -7,9 +7,6 @@ import Question from "./Question";
 function App() {
   return (
     <Router>
-      <nav>
-        <Link to="/">Main</Link> | <Link to="/question">Question</Link>
-      </nav>
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/question" element={<Question />} />
