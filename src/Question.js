@@ -26,7 +26,7 @@ const Question = () => {
         <h2>1. 나는 OOO한 관객이다.</h2>
         <input
           type="text"
-          placeholder="열정적인"
+          placeholder="답변을 입력하세요.."
           value={audienceAnswer}
           onChange={(e) => setAudienceAnswer(e.target.value)}
         />
@@ -37,7 +37,7 @@ const Question = () => {
         <h2>2. 내가 제일 재미있게 본 공연은 OOO이다.</h2>
         <input
           type="text"
-          placeholder="캣츠"
+          placeholder="답변을 입력하세요.."
           value={performanceAnswer}
           onChange={(e) => setPerformanceAnswer(e.target.value)}
         />

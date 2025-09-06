@@ -33,7 +33,7 @@
 }
 
 .question-card input[type="text"]:focus {
-  border-color: #6c63ff;
+  border-color: #d05757;
   box-shadow: 0 0 5px rgba(108,99,255,0.3);
 }
 
@@ -41,7 +41,7 @@
   padding: 10px 15px;
   border: none;
   border-radius: 8px;
-  background-color: #6c63ff;
+  background-color: #d05757;
   color: white;
   font-weight: bold;
   cursor: pointer;
@@ -49,5 +49,5 @@
 }
 
 .question-card button:hover {
-  background-color: #574fd6;
+  background-color: #d05757;
 }
