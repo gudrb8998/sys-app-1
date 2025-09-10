@@ -4,16 +4,12 @@ import { results } from "./answers";
 import "./AudienceTypeTest.css";
 
 // 배열 랜덤 섞기 함수
-const shuffleArray = (array) => {
-  return [...array].sort(() => Math.random() - 0.5);
-};
+const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
 const AudienceTypeTest = () => {
   const [answers, setAnswers] = useState(Array(questions.length).fill(""));
   const [currentPage, setCurrentPage] = useState(0);
-  const [shuffledOptions, setShuffledOptions] = useState(
-    shuffleArray(questions[0].options)
-  );
+  const [shuffledOptions, setShuffledOptions] = useState(shuffleArray(questions[0].options));
   const [showModal, setShowModal] = useState(false);
   const [modalResults, setModalResults] = useState([]);
   const [showShare, setShowShare] = useState(false);
@@ -39,9 +35,19 @@ const AudienceTypeTest = () => {
   };
 
   const submitAnswers = () => {
+    // 누락된 질문 확인
+    const unanswered = answers
+      .map((a, idx) => (!a ? idx + 1 : null))
+      .filter((v) => v !== null);
+
+    if (unanswered.length > 0) {
+      alert(`모든 질문에 답변해 주세요.\n답변하지 않은 질문: ${unanswered.join(", ")}`);
+      return;
+    }
+
+    // 답변 개수 세기
     const countMap = {};
     answers.forEach((a) => {
-      if (!a) return;
       countMap[a] = (countMap[a] || 0) + 1;
     });
 
@@ -97,7 +103,7 @@ const AudienceTypeTest = () => {
             {modalResults.map((res, idx) => (
               <div key={idx} style={{ marginBottom: "20px" }}>
                 <div className="modal-header">{res.title}</div>
-                <div className="modal-body">
+                <div className="modal-body" style={{ overflowY: "visible" }}>
                   <p><strong>캐릭터 설명</strong></p>
                   <p>{res.character}</p>
                   <p><strong>공연 추천 스타일</strong></p>
