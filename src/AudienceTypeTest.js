@@ -1,13 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { questions } from "./questions";
-import { audienceResults } from "./answers";
+import { results } from "./answers";
 import "./AudienceTypeTest.css";
+
+// 배열 랜덤 섞기 함수
+const shuffleArray = (array) => {
+  return [...array].sort(() => Math.random() - 0.5);
+};
 
 const AudienceTypeTest = () => {
   const [answers, setAnswers] = useState(Array(questions.length).fill(""));
+  const [currentPage, setCurrentPage] = useState(0);
+  const [shuffledOptions, setShuffledOptions] = useState(
+    shuffleArray(questions[0].options)
+  );
   const [showModal, setShowModal] = useState(false);
-  const [results, setResults] = useState([]);
-  const [showShareBox, setShowShareBox] = useState(false);
+  const [modalResults, setModalResults] = useState([]);
+  const [showShare, setShowShare] = useState(false);
+
+  // 페이지 변경 시 옵션 랜덤화
+  useEffect(() => {
+    setShuffledOptions(shuffleArray(questions[currentPage].options));
+  }, [currentPage]);
 
   const handleAnswer = (index, key) => {
     const newAnswers = [...answers];
@@ -15,160 +29,108 @@ const AudienceTypeTest = () => {
     setAnswers(newAnswers);
   };
 
-  const submitAnswers = () => {
-    if (answers.some((a) => a === "")) {
-      alert("모든 질문에 답변해 주세요.");
-      return;
-    }
-
-    const counts = answers.reduce((acc, key) => {
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-
-    const maxCount = Math.max(...Object.values(counts));
-    const maxKeys = Object.keys(counts).filter((key) => counts[key] === maxCount);
-    const selectedResults = maxKeys.map((key) => audienceResults[key]);
-
-    setResults(selectedResults);
-    setShowModal(true);
-  };
-
-  const resetTest = () => {
+  const restartTest = () => {
     setAnswers(Array(questions.length).fill(""));
-    setResults([]);
+    setCurrentPage(0);
     setShowModal(false);
-    setShowShareBox(false);
+    setModalResults([]);
+    setShowShare(false);
+    setShuffledOptions(shuffleArray(questions[0].options));
   };
 
-  // 공유 기능
-  const shareToClipboard = () => {
-    const shareText = results.map((r) => `${r.title}\n${r.description}`).join("\n\n");
-    navigator.clipboard.writeText(shareText);
-    alert("결과가 클립보드에 복사되었습니다!");
-  };
+  const submitAnswers = () => {
+    const countMap = {};
+    answers.forEach((a) => {
+      if (!a) return;
+      countMap[a] = (countMap[a] || 0) + 1;
+    });
 
-  const kakaoShare = () => {
-    const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(results.map((r) => r.title).join(", "));
-    window.open(`https://sharer.kakao.com/talk/friends/picker/link?url=${url}&text=${text}`, "_blank");
-  };
+    const maxCount = Math.max(...Object.values(countMap));
+    const topKeys = Object.keys(countMap).filter((k) => countMap[k] === maxCount);
 
-  const twitterShare = () => {
-    const text = encodeURIComponent(results.map((r) => r.title).join(", "));
-    const url = encodeURIComponent(window.location.href);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank");
-  };
-
-  const instaShare = () => {
-    alert("인스타그램은 웹 공유 기능이 제한적입니다. 모바일 앱에서 공유해주세요.");
+    const finalResults = topKeys.map((key) => results[key]);
+    setModalResults(finalResults);
+    setShowModal(true);
   };
 
   return (
     <div className="audience-test-container">
-      {questions.map((q, i) => (
-        <div key={q.id} className="question-card">
-          <h3>{q.text}</h3>
-          {q.options.map((opt) => (
-            <label key={opt.key}>
-              <input
-                type="radio"
-                name={`q${q.id}`}
-                value={opt.key}
-                checked={answers[i] === opt.key}
-                onChange={() => handleAnswer(i, opt.key)}
-              />
-              <span>{opt.text}</span>
-            </label>
-          ))}
-        </div>
-      ))}
+      {/* 질문 카드 */}
+      <div className="question-card">
+        <h3>
+          Q{currentPage + 1}. {questions[currentPage].text}
+        </h3>
+        {shuffledOptions.map((opt) => (
+          <label key={opt.key}>
+            <input
+              type="radio"
+              name={`q${questions[currentPage].id}`}
+              value={opt.key}
+              checked={answers[currentPage] === opt.key}
+              onChange={() => handleAnswer(currentPage, opt.key)}
+            />
+            <span>{opt.text}</span>
+          </label>
+        ))}
+      </div>
 
-      <button className="submit-button" onClick={submitAnswers}>
-        결과 보기
-      </button>
+      {/* 페이지 네비게이션 버튼 */}
+      <div className="navigation-buttons">
+        {currentPage > 0 && (
+          <button onClick={() => setCurrentPage(currentPage - 1)}>이전</button>
+        )}
+        {currentPage < questions.length - 1 ? (
+          <button onClick={() => setCurrentPage(currentPage + 1)}>다음</button>
+        ) : (
+          <button onClick={submitAnswers}>결과보기</button>
+        )}
+      </div>
 
       {/* 결과 모달 */}
-      {showModal && results.length > 0 && (
-        <div className="modal-overlay" onClick={() => { setShowModal(false); setShowShareBox(false); }}>
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-
-            {/* 모달 닫기 */}
-            <button className="modal-close" onClick={() => { setShowModal(false); setShowShareBox(false); }}>
+            <button className="modal-close" onClick={() => setShowModal(false)}>
               &times;
             </button>
 
-            {results.map((result, idx) => (
+            {modalResults.map((res, idx) => (
               <div key={idx} style={{ marginBottom: "20px" }}>
-                <div className="modal-header">{result.title}</div>
+                <div className="modal-header">{res.title}</div>
                 <div className="modal-body">
-                  <p><strong>캐릭터 설명:</strong><br />{result.description}</p>
-                  <p><strong>공연 추천 스타일:</strong><br />{result.style}</p>
-                  <p><strong>어울리는 장르:</strong><br />{result.genre}</p>
+                  <p><strong>캐릭터 설명</strong></p>
+                  <p>{res.character}</p>
+                  <p><strong>공연 추천 스타일</strong></p>
+                  <p>{res.style}</p>
+                  <p><strong>어울리는 장르</strong></p>
+                  <p>{res.genre}</p>
                 </div>
               </div>
             ))}
 
-            {/* 버튼 그룹 */}
-            <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "15px" }}>
-              <button className="submit-button" onClick={resetTest} style={{ backgroundColor: "#555" }}>
-                다시하기
-              </button>
-              <button className="submit-button" onClick={() => setShowShareBox(true)} style={{ backgroundColor: "#3b5998" }}>
-                공유하기
-              </button>
+            {/* 다시하기 & 공유 버튼 */}
+            <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "10px" }}>
+              <button onClick={restartTest} className="submit-button">다시하기</button>
+              <button onClick={() => setShowShare(true)} className="submit-button">결과 공유</button>
             </div>
 
-{/* 공유 박스 - 모달 위에 겹치게 */}
-{showShareBox && (
-  <div
-    className="modal-overlay"
-    style={{ background: "rgba(0,0,0,0.3)", zIndex: 1100 }}
-    onClick={() => setShowShareBox(false)}
-  >
-    <div
-      className="modal-content"
-      onClick={(e) => e.stopPropagation()}
-      style={{ maxWidth: "400px", padding: "20px", position: "relative" }}
-    >
-      <button
-        className="modal-close"
-        onClick={() => setShowShareBox(false)}
-        style={{ top: "10px", right: "10px" }}
-      >
-        &times;
-      </button>
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
-        <button className="submit-button" onClick={shareToClipboard} style={{ backgroundColor: "#999" }}>
-          클립보드 공유
-        </button>
-        <button
-          className="submit-button"
-          onClick={() => {
-            const url = encodeURIComponent(window.location.href);
-            const text = encodeURIComponent(results.map((r) => r.title).join(", "));
-            window.open(`https://story.kakao.com/share?url=${url}&text=${text}`, "_blank");
-          }}
-          style={{ backgroundColor: "#fee500", color: "#3c1e1e" }}
-        >
-          카카오스토리 공유
-        </button>
-        <button className="submit-button" onClick={twitterShare} style={{ backgroundColor: "#1da1f2" }}>
-          트위터 공유
-        </button>
-        <button
-          className="submit-button"
-          onClick={() => alert("링크가 복사되었습니다. 인스타그램 앱에서 공유해주세요!")}
-          style={{ backgroundColor: "#c13584" }}
-        >
-          인스타그램 공유
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-
+            {/* 공유 모달 */}
+            {showShare && (
+              <div className="modal-overlay" onClick={() => setShowShare(false)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                  <button className="modal-close" onClick={() => setShowShare(false)}>
+                    &times;
+                  </button>
+                  <h3 style={{ textAlign: "center", marginBottom: "10px" }}>공유하기</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <button onClick={() => navigator.clipboard.writeText(window.location.href)}>기본 링크 복사</button>
+                    <button onClick={() => window.open(`https://story.kakao.com/share?url=${encodeURIComponent(window.location.href)}`, "_blank")}>카카오스토리 공유</button>
+                    <button onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}`, "_blank")}>트위터 공유</button>
+                    <button onClick={() => alert("링크가 복사되었습니다. 인스타그램 앱에서 공유해주세요!")}>인스타그램 공유</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

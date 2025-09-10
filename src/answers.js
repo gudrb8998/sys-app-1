@@ -1,4 +1,4 @@
-export const audienceResults = {
+export const results = {
   A: {
     title: "🦉 수동적 관객 (Passive Audience)",
     description: `"나는 예술의 숲에서 고요히 앉아 있는 부엉이."
