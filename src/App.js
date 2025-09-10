@@ -5,6 +5,7 @@ import Main from "./Main";
 import Question from "./Question";
 import QRCodeComponent from './QRCodeComponent';
 import AudienceTypeTest from "./AudienceTypeTest";
+import QRCodeComponent2 from "./QRCodeComponent2";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/question" element={<Question />} />
         <Route path="/test" element={<AudienceTypeTest />} />
         <Route path="/qr" element={<QRCodeComponent />} />
+        <Route path="/qr2" element={<QRCodeComponent2 />} />
       </Routes>
     </Router>
   );

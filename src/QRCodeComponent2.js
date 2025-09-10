@@ -1,13 +1,13 @@
-// QRCodeComponent.js
+// QRCodeComponent2.js
 import React from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 
-const QRCodeComponent = () => {
-  const url = 'https://sys-app-1.vercel.app/question';
+const QRCodeComponent2 = () => {
+  const url = 'https://sys-app-1.vercel.app/test';
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>질문 QR Code</h2>
+      <h2 style={styles.title}>관객 유형 테스트 QR Code</h2>
       <QRCodeCanvas
         value={url}
         size={200}
@@ -41,4 +41,4 @@ const styles = {
   },
 };
 
-export default QRCodeComponent;
+export default QRCodeComponent2;
