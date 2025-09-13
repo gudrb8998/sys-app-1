@@ -161,7 +161,7 @@ const Main = () => {
 
   return (
     <div className="main-container">
-      <button className="clear-btn" onClick={handleClear}>데이터 초기화</button>
+      <button className="clear-btn" onClick={handleClear}></button>
       {!isFullscreen && (
         <button onClick={goFull}>전체화면으로</button>
       )}
