@@ -13,8 +13,8 @@ import './Main.css';
 
 // 랜덤 스타일과 rect 계산
 const getRandomStyle = (text, containerWidth = 500, containerHeight = 500) => {
-  const minFont = 20;
-  const maxFont = 60;
+  const minFont = 50;
+  const maxFont = 70;
   const fontSize = Math.floor(Math.random() * (maxFont - minFont + 1)) + minFont;
 
   const hue = Math.floor(Math.random() * 360);
@@ -74,6 +74,20 @@ const FloatingText = ({ textObj }) => {
 const Main = () => {
   const [leftAnswers, setLeftAnswers] = useState([]);
   const [rightAnswers, setRightAnswers] = useState([]);
+
+  const goFull = async () => {
+    const el = document.documentElement; // 또는 특정 컨테이너
+    if (el.requestFullscreen) {
+      try {
+        await el.requestFullscreen();
+        console.log("Entered fullscreen");
+      } catch (err) {
+        console.error("Fullscreen failed", err);
+      }
+    } else {
+      alert("Fullscreen API not supported.");
+    }
+  };
 
   // 새 글자 추가 및 기존 글자 opacity 조정
   const handleNewAnswers = (newItems, existingItems, setItems) => {
@@ -135,6 +149,7 @@ const Main = () => {
   return (
     <div className="main-container">
       <button className="clear-btn" onClick={handleClear}>데이터 초기화</button>
+      <button onClick={goFull}>전체화면으로</button>;
       <div className="left-area">
         {leftAnswers.map(a => <FloatingText key={a.id} textObj={a} />)}
       </div>
