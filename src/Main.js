@@ -27,11 +27,17 @@ const getRandomStyle = (text, containerWidth = 500, containerHeight = 500) => {
   const width = isVertical ? fontSize : text.length * fontSize * 0.5;
   const height = isVertical ? text.length * fontSize * 0.6 : fontSize;
 
-  const top = Math.random() * (containerHeight - height);
-  const left = Math.random() * (containerWidth - width);
+  // --- 여기서 margin 적용 ---
+  const margin = 30; // 화면 가장자리 여백
+  const maxLeft = containerWidth - width - margin;
+  const maxTop = containerHeight - height - margin;
+
+  const top = Math.random() * (maxTop - margin) + margin;
+  const left = Math.random() * (maxLeft - margin) + margin;
 
   return { fontSize, color, top, left, isVertical, opacity: 1, width, height };
 };
+
 
 // 충돌 체크
 const isOverlap = (a, b) => {
