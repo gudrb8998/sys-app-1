@@ -13,8 +13,8 @@ import './Main.css';
 
 // 랜덤 스타일과 rect 계산
 const getRandomStyle = (text, containerWidth = 500, containerHeight = 500) => {
-  const minFont = 50;
-  const maxFont = 70;
+  const minFont = 30;
+  const maxFont = 50;
   const fontSize = Math.floor(Math.random() * (maxFont - minFont + 1)) + minFont;
 
   const hue = Math.floor(Math.random() * 360);
