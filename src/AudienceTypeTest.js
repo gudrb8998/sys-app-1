@@ -105,7 +105,7 @@ const AudienceTypeTest = () => {
                 <div className="modal-header">{res.title}</div>
                 <div className="modal-body" style={{ overflowY: "visible" }}>
                   <p><strong>캐릭터 설명</strong></p>
-                  <p>{res.character}</p>
+                  <p>{res.description}</p>
                   <p><strong>공연 추천 스타일</strong></p>
                   <p>{res.style}</p>
                   <p><strong>어울리는 장르</strong></p>
@@ -117,7 +117,6 @@ const AudienceTypeTest = () => {
             {/* 다시하기 & 공유 버튼 */}
             <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "10px" }}>
               <button onClick={restartTest} className="submit-button">다시하기</button>
-              <button onClick={() => setShowShare(true)} className="submit-button">결과 공유</button>
             </div>
 
             {/* 공유 모달 */}

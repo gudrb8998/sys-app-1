@@ -89,7 +89,7 @@ export const questions = [
   },
   {
     id: 9,
-    text: "공연을 추천할 때 나는?",
+    text: "공연을 추천할 때 나의 코멘트는?",
     options: [
       { key: "A", text: "“분위기 있고 차분해.”" },
       { key: "B", text: "“생각할 거리가 많아.”" },
