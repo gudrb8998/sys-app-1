@@ -13,7 +13,7 @@ import './Main.css';
 
 
 // 랜덤 스타일과 rect 계산
-const getRandomStyle = (text, containerWidth = 500, containerHeight = 500) => {
+const getRandomStyle = (text, containerWidth = 500, containerHeight = 500, existingItems = []) => {
   const minFont = 30;
   const maxFont = 50;
   const fontSize = Math.floor(Math.random() * (maxFont - minFont + 1)) + minFont;
@@ -24,15 +24,28 @@ const getRandomStyle = (text, containerWidth = 500, containerHeight = 500) => {
   const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 
   const isVertical = Math.random() < 0.3;
-
   const width = isVertical ? fontSize : text.length * fontSize * 0.5;
   const height = isVertical ? text.length * fontSize * 0.6 : fontSize;
 
-  const top = Math.random() * (containerHeight - height);
-  const left = Math.random() * (containerWidth - width);
+  let top, left;
+  let attempt = 0;
+  const maxAttempts = 100;
+
+  do {
+    top = Math.random() * (containerHeight - height);
+    left = Math.random() * (containerWidth - width);
+
+    const newRect = { top, left, width, height };
+
+    const overlap = existingItems.some(item => isOverlap(item.style, newRect));
+    if (!overlap) break;
+
+    attempt++;
+  } while (attempt < maxAttempts);
 
   return { fontSize, color, top, left, isVertical, opacity: 1, width, height };
 };
+
 
 // 충돌 체크
 const isOverlap = (a, b) => {
@@ -126,7 +139,7 @@ const Main = () => {
       const newAnswers = snapshot.docs
         .filter(doc => !leftAnswers.some(a => a.id === doc.id))
         .map(doc => {
-          const style = getRandomStyle(doc.data().text, window.innerWidth/2, window.innerHeight);
+          const style = getRandomStyle(doc.data().text, window.innerWidth/2, window.innerHeight, leftAnswers);
           return { id: doc.id, text: doc.data().text, style };
         });
 
@@ -138,7 +151,7 @@ const Main = () => {
       const newAnswers = snapshot.docs
         .filter(doc => !rightAnswers.some(a => a.id === doc.id))
         .map(doc => {
-          const style = getRandomStyle(doc.data().text, window.innerWidth/2, window.innerHeight);
+          const style = getRandomStyle(doc.data().text, window.innerWidth/2, window.innerHeight, rightAnswers);
           return { id: doc.id, text: doc.data().text, style };
         });
 
