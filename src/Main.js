@@ -74,6 +74,7 @@ const FloatingText = ({ textObj }) => {
 const Main = () => {
   const [leftAnswers, setLeftAnswers] = useState([]);
   const [rightAnswers, setRightAnswers] = useState([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const goFull = async () => {
     const el = document.documentElement; // 또는 특정 컨테이너
@@ -88,6 +89,18 @@ const Main = () => {
       alert("Fullscreen API not supported.");
     }
   };
+
+  // 전체화면 상태 감지
+  useEffect(() => {
+    const handleChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleChange);
+    };
+  }, []);
 
   // 새 글자 추가 및 기존 글자 opacity 조정
   const handleNewAnswers = (newItems, existingItems, setItems) => {
@@ -149,7 +162,9 @@ const Main = () => {
   return (
     <div className="main-container">
       <button className="clear-btn" onClick={handleClear}>데이터 초기화</button>
-      <button onClick={goFull}>전체화면으로</button>;
+      {!isFullscreen && (
+        <button onClick={goFull}>전체화면으로</button>
+      )}
       <div className="left-area">
         {leftAnswers.map(a => <FloatingText key={a.id} textObj={a} />)}
       </div>
