@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  collection, 
   query, 
   where, 
   onSnapshot, 
