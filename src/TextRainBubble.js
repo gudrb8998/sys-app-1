@@ -66,9 +66,9 @@ const TextRainBubble = () => {
         if (drop.state === 'falling') {
           currentScale = 1.0 + Math.sin(time * drop.pulseSpeed + drop.pulsePhase) * 0.4;
         } else if (drop.state === 'popping') {
-          drop.popScale += 0.05;
-          currentScale = (1.0 + Math.sin(time * drop.pulseSpeed + drop.pulsePhase) * 0.4) * drop.popScale;
-          currentOpacity -= 0.05;
+          drop.popScale += 0.02;
+          currentScale = Math.min(drop.popScale, 1.3);
+          currentOpacity -= 0.04;
           if (currentOpacity <= 0) {
             drops.splice(i, 1);
             continue;
