@@ -109,6 +109,24 @@ const TextRainBubble = () => {
       // 2. 군집 및 위성단어 업데이트
       clusters.forEach(cluster => {
         if (!cluster.burst) {
+          // 표면 미끄러지기 (Sliding) 로직
+          cluster.circles.forEach(c => {
+            if (c.isCenter || c.targetAngle === undefined) return;
+            
+            let angleDiff = c.targetAngle - c.currentAngle;
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+            
+            if (Math.abs(angleDiff) > 0.05) {
+               c.currentAngle += Math.sign(angleDiff) * 0.05;
+               const dist = Math.sqrt(c.dx * c.dx + c.dy * c.dy);
+               c.dx = Math.cos(c.currentAngle) * dist;
+               c.dy = Math.sin(c.currentAngle) * dist;
+            } else {
+               delete c.targetAngle; // 목적지 도착 시 미끄러지기 종료
+            }
+          });
+
         // 물리 엔진 (Circle Packing Relaxation)
         for (let iter = 0; iter < 6; iter++) {
           for (let i = 0; i < cluster.circles.length; i++) {
@@ -247,17 +265,19 @@ const TextRainBubble = () => {
         }
 
         if (hit) {
-          // 닿는 순간, 단어1(중심) 주변의 임의의 각도로 순간이동하여 부착 (이후 물리엔진이 빈자리로 쑤셔넣음)
+          // 닿는 순간 현재 위치에 부착하고, 목표 각도(targetAngle)를 향해 표면을 따라 미끄러지도록 설정
+          const currentAngle = Math.atan2(bubble.y - target.y, bubble.x - target.x);
           const attachAngle = Math.random() * Math.PI * 2;
-          const attachDist = target.circles[0].radius + bubble.radius;
           
           target.circles.push({
             isCenter: false,
             word: bubble.word,
             color: bubble.color,
             radius: bubble.radius,
-            dx: Math.cos(attachAngle) * attachDist,
-            dy: Math.sin(attachAngle) * attachDist,
+            dx: bubble.x - target.x,
+            dy: bubble.y - target.y,
+            currentAngle: currentAngle,
+            targetAngle: attachAngle,
             pulseSpeed: bubble.pulseSpeed,
             pulsePhase: bubble.pulsePhase
           });
