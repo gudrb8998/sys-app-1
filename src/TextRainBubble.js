@@ -99,7 +99,7 @@ const TextRainBubble = () => {
           pendingSatellites: item.satellites,
           lastSatSpawnTime: timestamp,
           landed: false,
-          speedY: 0.7 + Math.random() * 0.2,
+          speedY: 0.6 + Math.random() * 0.1,
           driftPhase: Math.random() * Math.PI * 2,
           satellitesSpawned: 0
         };
