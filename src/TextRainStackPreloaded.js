@@ -18,10 +18,9 @@ const TextRainStackPreloaded = () => {
 
     const wordPool = generateHangulPool(); // 초기 200단어
     let fallingDrops = [];
-    const maxActiveDrops = 100;
+
 
     let stackedWords = [];
-    let lastSpawnTime = 0;
 
     const fontSize = 18;
     const lineHeight = fontSize + 4;
@@ -53,23 +52,15 @@ const TextRainStackPreloaded = () => {
         x: drop.x,
         y: stopY,
         color: drop.color,
+        hue: drop.color.match(/\d+/)[0], // hsl(hue, ...)에서 숫자만 추출
         w: textWidth,
         h: lineHeight,
       });
     }
 
-    // 미리 쌓은 후, 추가로 비가 내리지 않게 풀을 리필하지 않음
-    // wordPool.push(...generateHangulPool());
-    // ----------------------------
+    let whiteProgress = 0;
 
-    const spawnDrop = () => {
-      if (fallingDrops.length < maxActiveDrops && wordPool.length > 0) {
-        const drop = createRaindrop(width, wordPool);
-        if (!drop) return;
-        drop.size = fontSize;
-        fallingDrops.push(drop);
-      }
-    };
+
 
     const handleResize = () => {
       width = window.innerWidth;
@@ -78,6 +69,28 @@ const TextRainStackPreloaded = () => {
       canvas.height = height;
       stackedWords = [];
       fallingDrops = [];
+      whiteProgress = 0;
+      
+      const newPool = generateHangulPool();
+      ctx.font = `bold ${fontSize}px sans-serif`;
+      while (newPool.length > 0) {
+        const drop = createRaindrop(width, newPool);
+        if (!drop) break;
+        const textWidth = ctx.measureText(drop.char).width;
+        
+        const floorY = getFloorY(drop.x, textWidth);
+        const stopY = floorY - lineHeight;
+
+        stackedWords.push({
+          char: drop.char,
+          x: drop.x,
+          y: stopY,
+          color: drop.color,
+          hue: drop.color.match(/\d+/)[0],
+          w: textWidth,
+          h: lineHeight,
+        });
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -86,20 +99,25 @@ const TextRainStackPreloaded = () => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
 
-      if (timestamp - lastSpawnTime > 120) {
-        spawnDrop();
-        lastSpawnTime = timestamp;
+      // 진행도 증가 (약 5초 동안 0에서 1로)
+      if (whiteProgress < 1) {
+        whiteProgress += 0.003;
+        if (whiteProgress > 1) whiteProgress = 1;
       }
-
-      // 정적 화면이므로 페이드아웃 로직 제거
 
       ctx.globalAlpha = 1.0;
       ctx.shadowBlur = 0;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
+      ctx.font = `bold ${fontSize}px sans-serif`;
+
       for (const sw of stackedWords) {
-        ctx.fillStyle = sw.color;
-        ctx.font = `bold ${fontSize}px sans-serif`;
+        // 65%에서 100%(순백색)로 서서히 밝아짐
+        const lightness = 65 + (35 * whiteProgress);
+        // 채도는 80%에서 0%로 서서히 빠짐 (더 깔끔한 흰색을 위해)
+        const saturation = 80 - (80 * whiteProgress);
+        
+        ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
         ctx.fillText(sw.char, sw.x, sw.y);
       }
       ctx.globalAlpha = 1.0;
