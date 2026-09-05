@@ -76,7 +76,7 @@ const TextRainGrass = () => {
       });
     }
 
-    // 2. 풀숲 실루엣 생성 (토양 위에 조금 더 길게)
+    // 2. 풀숲 실루엣 생성 (풀 그림자 더 크게)
     let grassBlades = [];
     for (let x = 0; x < width; x += 15) {
       const soilY = getFloorY(x, 10);
@@ -84,9 +84,9 @@ const TextRainGrass = () => {
         x: x,
         y: soilY,
         origY: soilY,
-        height: 60 + Math.random() * 100, // 이전(20~70)보다 좀 더 길게 (60~160)
+        height: 100 + Math.random() * 150, // 풀 길이 증가 (100~250)
         origHeight: 0,
-        controlX: (Math.random() - 0.5) * 40, // 사라졌던 곡선 제어값 복구
+        controlX: (Math.random() - 0.5) * 60, // 곡선 폭도 조금 더 넓게
       });
     }
     // Set origHeight
@@ -133,7 +133,7 @@ const TextRainGrass = () => {
             char: item.word,
             color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
             speed: 1 + Math.random() * 1.5,
-            targetScale: 1 + freqRatio * 1.0, // 빈도가 높을수록 최대 2배까지 커짐
+            targetScale: 1 + freqRatio * 0.5, // 빈도 높은 단어 커지는 비율 절반으로 감소 (최대 1.5배)
           };
         });
 
@@ -227,14 +227,13 @@ const TextRainGrass = () => {
       // 쌓인 단어 그리기 및 자라나는(Scale) 애니메이션
       for (const sw of stackedWords) {
         if (!sw.isBase) {
-          // Y축 자라나기
+          // 통통 튀는 애니메이션 제거: 1.0부터 시작해서 부드럽게 목표 크기까지 확대
           if (sw.scaleY < sw.targetScale) {
-            sw.scaleY += 0.02;
+            sw.scaleY += 0.01;
             if (sw.scaleY > sw.targetScale) sw.scaleY = sw.targetScale;
           }
-          // X축 자라나기 (목표 크기까지)
           if (sw.scaleX < sw.targetScale) {
-            sw.scaleX += 0.02;
+            sw.scaleX += 0.01;
             if (sw.scaleX > sw.targetScale) sw.scaleX = sw.targetScale;
           }
         }
@@ -280,11 +279,15 @@ const TextRainGrass = () => {
             char: drop.char,
             x: drop.x,
             y: stopY,
+            origX: drop.x,
+            origY: stopY,
+            origW: drop.w,
+            origH: lineHeight,
             color: drop.color,
             w: drop.w,
             h: lineHeight,
             scaleX: 1.0,
-            scaleY: 0.1, // y축으로 납작한 상태에서 시작
+            scaleY: 1.0, // 0.1에서 시작하는 압축(튀는) 애니메이션 제거. 기본 1.0에서 목표 크기로 부드럽게 확대
             targetScale: drop.targetScale, // 최종 목표 크기
             isBase: false,
           });
