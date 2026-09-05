@@ -26,10 +26,11 @@ const TextRainGrass = () => {
     canvas.width = width;
     canvas.height = height;
 
+    let originalParsedData = [];
+    let maxFreq = 1;
     const fontSize = 18;
     const lineHeight = fontSize + 4;
     ctx.font = `bold ${fontSize}px sans-serif`;
-
     let stackedWords = [];
     let fallingDrops = [];
     let sproutQueue = [];
@@ -121,31 +122,39 @@ const TextRainGrass = () => {
         }).filter(item => item.word);
         
         parsed.sort((a, b) => b.freq - a.freq);
-        const maxFreq = parsed[0]?.freq || 1;
+        originalParsedData = parsed; // 큐 재설정을 위해 저장
+        maxFreq = parsed[0]?.freq || 1;
         
-        sproutQueue = parsed.map(item => {
-          const hue = getHueForGramSize(item.gramSize);
-          const freqRatio = item.freq / maxFreq; 
-          const lightness = 40 + (50 * freqRatio);
-          const opacity = 0.5 + (0.5 * freqRatio);
-          
-          const top5 = ['예술 감독', '전통 춤', '현대 무용', '문화 예술', '한국 무용'];
-          const isTop5 = top5.includes(item.word);
-          
-          return {
-            char: item.word,
-            color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
-            speed: 1 + Math.random() * 1.5,
-            targetScale: isTop5 ? (1 + freqRatio * 0.5) : 1.0, // 상위 5개 단어만 커지도록 설정
-          };
-        });
-
+        rebuildQueue();
         isDataLoaded = true;
       });
 
     let lastSpawnTime = 0;
+    
+    let isResetting = false;
+    let fadeProgress = 0;
+    const top5 = ['예술 감독', '전통 춤', '현대 무용', '문화 예술', '한국 무용'];
+
+    const rebuildQueue = () => {
+      sproutQueue = originalParsedData.map(item => {
+        const hue = getHueForGramSize(item.gramSize);
+        const freqRatio = item.freq / maxFreq; 
+        const lightness = 40 + (50 * freqRatio);
+        const opacity = 0.5 + (0.5 * freqRatio);
+        
+        const isTop5 = top5.includes(item.word);
+        
+        return {
+          char: item.word,
+          color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
+          speed: 1 + Math.random() * 1.5,
+          targetScale: isTop5 ? (1 + freqRatio * 0.5) : 1.0, // 상위 5개 단어만 커지도록 설정
+        };
+      });
+    };
 
     const spawnRain = () => {
+      if (isResetting) return; // 리셋 중에는 새로 생성하지 않음
       if (sproutQueue.length > 0 && fallingDrops.length < 100) {
         const item = sproutQueue.shift();
         const baseTextWidth = ctx.measureText(item.char).width;
@@ -180,6 +189,32 @@ const TextRainGrass = () => {
       if (whiteProgress < 1) {
         whiteProgress += 0.003;
         if (whiteProgress > 1) whiteProgress = 1;
+      }
+
+      // 화면 위까지 찼는지 확인
+      if (!isResetting) {
+        let highestY = height;
+        for (const sw of stackedWords) {
+          if (sw.y < highestY) highestY = sw.y;
+        }
+        if (highestY < 50 && whiteProgress >= 1) { // 꼭대기 도달
+          isResetting = true;
+          fadeProgress = 0;
+        }
+      }
+
+      // 리셋 중이면 fade 처리
+      if (isResetting) {
+        fadeProgress += 0.005;
+        if (fadeProgress >= 1) {
+          // Fade 완료 시 일반 ngram 단어 및 비 삭제 (top5와 베이스는 유지)
+          stackedWords = stackedWords.filter(sw => sw.isBase || top5.includes(sw.char));
+          fallingDrops = [];
+          
+          rebuildQueue();
+          isResetting = false;
+          fadeProgress = 0;
+        }
       }
 
       const baseScale = 1 - (0.25 * whiteProgress); // 1.0 -> 0.75 (기존 절반만큼만 축소)
@@ -239,6 +274,11 @@ const TextRainGrass = () => {
         }
 
         ctx.save();
+        
+        // 리셋 중이고, 보존 대상이 아니면 투명하게
+        if (isResetting && !sw.isBase && !top5.includes(sw.char)) {
+          ctx.globalAlpha = 1 - fadeProgress;
+        }
 
         if (sw.isBase) {
           // 토양(200단어)은 하얀색으로 변하며 서서히 작아짐 (1.0 -> 0.5)
@@ -294,6 +334,9 @@ const TextRainGrass = () => {
         }
 
         ctx.save();
+        if (isResetting && !top5.includes(drop.char)) {
+          ctx.globalAlpha = 1 - fadeProgress;
+        }
         ctx.fillStyle = drop.color;
         ctx.translate(drop.x, drop.y);
         ctx.fillText(drop.char, 0, 0);
