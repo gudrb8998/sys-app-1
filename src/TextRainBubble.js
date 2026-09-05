@@ -18,7 +18,8 @@ const TextRainBubble = () => {
     
     let clusters = []; 
     let freeBubbles = [];
-    let scatteredBubbles = []; 
+    let scatteredBubbles = [];
+    let fadingOutBubbles = []; 
     let spawnQueue = []; 
 
     let animationFrameId;
@@ -109,23 +110,7 @@ const TextRainBubble = () => {
       // 2. 군집 및 위성단어 업데이트
       clusters.forEach(cluster => {
         if (!cluster.burst) {
-          // 표면 미끄러지기 (Sliding) 로직
-          cluster.circles.forEach(c => {
-            if (c.isCenter || c.targetAngle === undefined) return;
-            
-            let angleDiff = c.targetAngle - c.currentAngle;
-            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-            
-            if (Math.abs(angleDiff) > 0.05) {
-               c.currentAngle += Math.sign(angleDiff) * 0.05;
-               const dist = Math.sqrt(c.dx * c.dx + c.dy * c.dy);
-               c.dx = Math.cos(c.currentAngle) * dist;
-               c.dy = Math.sin(c.currentAngle) * dist;
-            } else {
-               delete c.targetAngle; // 목적지 도착 시 미끄러지기 종료
-            }
-          });
+
 
         // 물리 엔진 (Circle Packing Relaxation)
         for (let iter = 0; iter < 6; iter++) {
@@ -265,19 +250,30 @@ const TextRainBubble = () => {
         }
 
         if (hit) {
-          // 닿는 순간 현재 위치에 부착하고, 목표 각도(targetAngle)를 향해 표면을 따라 미끄러지도록 설정
-          const currentAngle = Math.atan2(bubble.y - target.y, bubble.x - target.x);
+          // 닿는 순간 그 자리에서 서서히 사라지도록 fadingOutBubbles에 추가
+          fadingOutBubbles.push({
+            word: bubble.word,
+            color: bubble.color,
+            radius: bubble.radius,
+            x: bubble.x,
+            y: bubble.y,
+            opacity: 1.0,
+            pulseSpeed: bubble.pulseSpeed,
+            pulsePhase: bubble.pulsePhase
+          });
+
+          // 목표 빈자리로 순간이동하되 투명하게(fadeIn=0) 추가하여 서서히 나타나도록 설정
           const attachAngle = Math.random() * Math.PI * 2;
+          const attachDist = target.circles[0].radius + bubble.radius;
           
           target.circles.push({
             isCenter: false,
             word: bubble.word,
             color: bubble.color,
             radius: bubble.radius,
-            dx: bubble.x - target.x,
-            dy: bubble.y - target.y,
-            currentAngle: currentAngle,
-            targetAngle: attachAngle,
+            dx: Math.cos(attachAngle) * attachDist,
+            dy: Math.sin(attachAngle) * attachDist,
+            fadeIn: 0.0,
             pulseSpeed: bubble.pulseSpeed,
             pulsePhase: bubble.pulsePhase
           });
@@ -331,24 +327,30 @@ const TextRainBubble = () => {
           const sx = cluster.x + c.dx;
           const sy = cluster.y + c.dy;
           
+          if (c.fadeIn !== undefined && c.fadeIn < 1.0) {
+            c.fadeIn += 0.05;
+            if (c.fadeIn > 1.0) c.fadeIn = 1.0;
+          }
+          const alphaMult = c.fadeIn !== undefined ? c.fadeIn : 1.0;
+          
           const currentScale = 1.0 + Math.sin(timestamp * c.pulseSpeed + c.pulsePhase) * 0.1;
           const currentRadius = c.radius * currentScale;
           
           // Bubble Fill
-          ctx.globalAlpha = 0.05;
+          ctx.globalAlpha = 0.05 * alphaMult;
           ctx.fillStyle = c.color;
           ctx.beginPath();
           ctx.arc(sx, sy, currentRadius, 0, Math.PI * 2);
           ctx.fill();
           
           // Bubble Stroke
-          ctx.globalAlpha = 0.3;
+          ctx.globalAlpha = 0.3 * alphaMult;
           ctx.strokeStyle = c.color;
           ctx.lineWidth = 1.5;
           ctx.stroke();
 
           // Text
-          ctx.globalAlpha = 1.0;
+          ctx.globalAlpha = 1.0 * alphaMult;
           ctx.shadowBlur = 10;
           ctx.shadowColor = c.color;
           ctx.fillStyle = c.color;
@@ -385,6 +387,38 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 0;
       });
 
+
+      // 5. 서서히 사라지는 물방울 렌더링
+      for (let i = fadingOutBubbles.length - 1; i >= 0; i--) {
+        const b = fadingOutBubbles[i];
+        b.opacity -= 0.05;
+        if (b.opacity <= 0) {
+          fadingOutBubbles.splice(i, 1);
+          continue;
+        }
+        
+        const currentScale = 1.0 + Math.sin(timestamp * b.pulseSpeed + b.pulsePhase) * 0.1;
+        const currentRadius = b.radius * currentScale;
+        
+        ctx.globalAlpha = 0.05 * b.opacity;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.globalAlpha = 0.3 * b.opacity;
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.globalAlpha = 1.0 * b.opacity;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = b.color;
+        ctx.fillStyle = b.color;
+        ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.fillText(b.word, b.x, b.y);
+        ctx.shadowBlur = 0;
+      }
       freeBubbles.forEach(bubble => {
         const currentScale = 1.0 + Math.sin(timestamp * bubble.pulseSpeed + bubble.pulsePhase) * 0.1;
         const currentRadius = bubble.radius * currentScale;
