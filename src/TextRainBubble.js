@@ -283,24 +283,7 @@ const TextRainBubble = () => {
          }
       });
       
-      // 분리된 단어들끼리 겹치지 않게 가볍게 밀어내기 (Relaxation 1 pass)
-      for (let i = 0; i < detachedBubbles.length; i++) {
-        for (let j = i + 1; j < detachedBubbles.length; j++) {
-           const b1 = detachedBubbles[i];
-           const b2 = detachedBubbles[j];
-           const dx = b2.x - b1.x;
-           const dy = b2.y - b1.y;
-           const dist = Math.sqrt(dx*dx + dy*dy) || 0.1;
-           const minDist = b1.radius + b2.radius;
-           if (dist < minDist) {
-              const overlap = (minDist - dist) * 0.5;
-              const nx = (dx/dist) * overlap;
-              const ny = (dy/dist) * overlap;
-              b1.x -= nx; b1.y -= ny;
-              b2.x += nx; b2.y += ny;
-           }
-        }
-      }
+
 
       // 4. 렌더링
       ctx.textAlign = 'center';
