@@ -203,9 +203,6 @@ const TextRainBubbleDrop = () => {
             dy: bubble.y - target.y
           });
           
-          // 중심 버블 크기 증가
-          target.circles[0].radius += 1.5;
-          
           freeBubbles.splice(i, 1);
         }
       }
