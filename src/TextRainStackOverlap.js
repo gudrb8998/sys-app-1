@@ -20,7 +20,8 @@ const TextRainStackOverlap = () => {
     let fallingDrops = [];
     const maxActiveDrops = 100;
 
-    // 쌓인 단어 목록 (겹침 허용)
+    // 쌓인 단어 목록: { char, x, y, color, w, h }
+    // y는 단어 상단 기준 (top), h는 높이
     let stackedWords = [];
     let lastSpawnTime = 0;
     let isFadingOut = false;
@@ -29,9 +30,22 @@ const TextRainStackOverlap = () => {
     const fontSize = 18;
     const lineHeight = fontSize + 4;
 
-    // 바닥에서 현재 쌓인 높이 (단순히 행 단위로 쌓임)
-    let currentStackRow = 0;
-    let currentRowX = 0;
+    /**
+     * 떨어지는 단어가 멈출 y 위치를 계산합니다.
+     * 해당 단어의 x 범위와 겹치는 쌓인 단어 중 가장 높은 것의 상단을 반환합니다.
+     */
+    const getFloorY = (dropX, dropW) => {
+      let floorY = height; // 바닥
+      for (const sw of stackedWords) {
+        // x 범위 겹침 확인
+        if (dropX + dropW > sw.x && dropX < sw.x + sw.w) {
+          if (sw.y < floorY) {
+            floorY = sw.y;
+          }
+        }
+      }
+      return floorY;
+    };
 
     const spawnDrop = () => {
       if (fallingDrops.length < maxActiveDrops && !isFadingOut) {
@@ -50,8 +64,6 @@ const TextRainStackOverlap = () => {
       fallingDrops = [];
       isFadingOut = false;
       fadeOutAlpha = 1.0;
-      currentStackRow = 0;
-      currentRowX = 0;
     };
 
     window.addEventListener('resize', handleResize);
@@ -66,9 +78,12 @@ const TextRainStackOverlap = () => {
         lastSpawnTime = timestamp;
       }
 
-      // 쌓인 높이 확인 → 80% 이상이면 페이드아웃
-      const stackHeightPx = currentStackRow * lineHeight;
-      if (stackHeightPx > height * 0.8 && !isFadingOut) {
+      // 쌓인 최고 높이 확인 → 80% 이상이면 페이드아웃
+      let minY = height;
+      for (const sw of stackedWords) {
+        if (sw.y < minY) minY = sw.y;
+      }
+      if (height - minY > height * 0.8 && !isFadingOut) {
         isFadingOut = true;
       }
 
@@ -79,8 +94,6 @@ const TextRainStackOverlap = () => {
           fallingDrops = [];
           isFadingOut = false;
           fadeOutAlpha = 1.0;
-          currentStackRow = 0;
-          currentRowX = 0;
         }
       }
 
@@ -88,7 +101,7 @@ const TextRainStackOverlap = () => {
       ctx.globalAlpha = isFadingOut ? fadeOutAlpha : 1.0;
       ctx.shadowBlur = 0;
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'bottom';
+      ctx.textBaseline = 'top';
       for (const sw of stackedWords) {
         ctx.fillStyle = sw.color;
         ctx.font = `bold ${fontSize}px sans-serif`;
@@ -98,33 +111,27 @@ const TextRainStackOverlap = () => {
 
       // 떨어지는 단어 업데이트 및 그리기
       ctx.font = `bold ${fontSize}px sans-serif`;
-      const floorY = height - currentStackRow * lineHeight;
-
       for (let i = fallingDrops.length - 1; i >= 0; i--) {
         const drop = fallingDrops[i];
+        const textWidth = ctx.measureText(drop.char).width;
+
+        // 이 단어가 멈출 바닥 위치
+        const floorY = getFloorY(drop.x, textWidth);
+        const stopY = floorY - lineHeight;
 
         drop.y += drop.speed;
 
-        // 바닥(현재 쌓인 줄 높이)에 닿으면 쌓기
-        if (drop.y >= floorY) {
+        // 바닥 또는 쌓인 단어 위에 도달
+        if (drop.y >= stopY) {
           if (!isFadingOut) {
-            const textWidth = ctx.measureText(drop.char).width;
-            const gap = 8;
-
-            // 현재 줄에 공간이 없으면 다음 줄로
-            if (currentRowX + textWidth > width) {
-              currentStackRow++;
-              currentRowX = 0;
-            }
-
             stackedWords.push({
               char: drop.char,
-              x: currentRowX,
-              y: height - currentStackRow * lineHeight,
+              x: drop.x,
+              y: stopY,
               color: drop.color,
+              w: textWidth,
+              h: lineHeight,
             });
-
-            currentRowX += textWidth + gap;
           }
           fallingDrops.splice(i, 1);
           continue;
@@ -134,7 +141,7 @@ const TextRainStackOverlap = () => {
         ctx.fillStyle = drop.color;
         ctx.globalAlpha = drop.opacity * (isFadingOut ? fadeOutAlpha : 1.0);
         ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
+        ctx.textBaseline = 'top';
 
         ctx.shadowColor = drop.color;
         ctx.shadowBlur = 10;
