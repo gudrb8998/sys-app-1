@@ -147,16 +147,13 @@ const TextRainGrass = () => {
         const item = sproutQueue.shift();
         const baseTextWidth = ctx.measureText(item.char).width;
         
-        // 떨어질 때부터 이미 커진 크기를 가지도록 설정
-        const scaledW = baseTextWidth * item.targetScale;
-        const scaledH = lineHeight * item.targetScale;
-
+        // 떨어질 때는 기본 크기(1.0)로 떨어짐
         fallingDrops.push({
           char: item.char,
-          x: Math.random() * (width - scaledW),
-          y: -scaledH,
-          w: scaledW,
-          h: scaledH,
+          x: Math.random() * (width - baseTextWidth),
+          y: -lineHeight,
+          w: baseTextWidth,
+          h: lineHeight,
           color: item.color,
           speed: item.speed,
           targetScale: item.targetScale,
@@ -230,8 +227,14 @@ const TextRainGrass = () => {
       ctx.textBaseline = 'top';
       ctx.font = `bold ${fontSize}px sans-serif`;
 
-      // 쌓인 단어 그리기
+      // 쌓인 단어 그리기 및 부드럽게 커지는 애니메이션
       for (const sw of stackedWords) {
+        // 땅에 닿은 후 1.0에서부터 서서히(0.005) 목표 크기까지 커짐 (튀는 느낌 없음)
+        if (!sw.isBase && sw.scale < sw.targetScale) {
+          sw.scale += 0.005;
+          if (sw.scale > sw.targetScale) sw.scale = sw.targetScale;
+        }
+
         ctx.save();
 
         if (sw.isBase) {
@@ -244,11 +247,12 @@ const TextRainGrass = () => {
           ctx.scale(baseScale, baseScale);
           ctx.fillText(sw.char, 0, 0);
         } else {
-          // 싹(ngram 데이터)은 떨어질 때의 크기 그대로 렌더링 (애니메이션 제거)
+          // 싹(ngram 데이터)은 스무스하게 커짐
           ctx.fillStyle = sw.color;
-          ctx.translate(sw.x, sw.y);
-          ctx.scale(sw.targetScale, sw.targetScale);
-          ctx.fillText(sw.char, 0, 0);
+          // 좌우 균형있게 커지도록 중앙 하단 기준
+          ctx.translate(sw.x + sw.w / 2, sw.y + sw.h);
+          ctx.scale(sw.scale, sw.scale);
+          ctx.fillText(sw.char, -sw.w / 2, -sw.h);
         }
 
         ctx.restore();
@@ -278,6 +282,7 @@ const TextRainGrass = () => {
             color: drop.color,
             w: drop.w,
             h: drop.h,
+            scale: 1.0, // 1.0에서 시작
             targetScale: drop.targetScale, // 최종 목표 크기
             isBase: false,
           });
@@ -288,7 +293,6 @@ const TextRainGrass = () => {
         ctx.save();
         ctx.fillStyle = drop.color;
         ctx.translate(drop.x, drop.y);
-        ctx.scale(drop.targetScale, drop.targetScale);
         ctx.fillText(drop.char, 0, 0);
         ctx.restore();
       }
