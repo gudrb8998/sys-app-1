@@ -99,7 +99,7 @@ const TextRainBubble = () => {
           pendingSatellites: item.satellites,
           lastSatSpawnTime: timestamp,
           landed: false,
-          speedY: 0.8 + Math.random() * 0.3,
+          speedY: 0.7 + Math.random() * 0.2,
           driftPhase: Math.random() * Math.PI * 2,
           satellitesSpawned: 0
         };
@@ -147,24 +147,9 @@ const TextRainBubble = () => {
           // Effect 2: 좌우 흔들림 (Drift)
           cluster.x += Math.sin(timestamp * 0.001 + cluster.driftPhase) * 0.3;
           
-          // 바닥 및 다른 클러스터 충돌 체크 (쌓이기 복구)
+          // 바닥 충돌 체크
           const myBottomExt = cluster.circles.length > 0 ? Math.max(...cluster.circles.map(c => c.dy + c.radius)) : 0;
-          let floorY = height - 10 - myBottomExt;
-          
-          clusters.forEach(other => {
-            if (other !== cluster && other.landed) {
-              const myLeft = cluster.x + Math.min(...cluster.circles.map(c => c.dx - c.radius));
-              const myRight = cluster.x + Math.max(...cluster.circles.map(c => c.dx + c.radius));
-              const otherLeft = other.x + Math.min(...other.circles.map(c => c.dx - c.radius));
-              const otherRight = other.x + Math.max(...other.circles.map(c => c.dx + c.radius));
-              
-              if (myRight > otherLeft && myLeft < otherRight) {
-                const otherTop = other.y + Math.min(...other.circles.map(c => c.dy - c.radius));
-                const catchY = otherTop - myBottomExt - 5;
-                if (catchY < floorY) floorY = catchY;
-              }
-            }
-          });
+          const floorY = height - 10 - myBottomExt;
           
           if (cluster.y >= floorY) {
             if (!cluster.shedSatellites) {
