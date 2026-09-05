@@ -123,7 +123,7 @@ const TextRainGrass = () => {
           return {
             char: item.word,
             color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
-            speed: 2 + Math.random() * 2, // 떨어지는 속도
+            speed: 1 + Math.random() * 1.5, // 기존(2~4)에서 (1~2.5)로 느리게
           };
         });
 
@@ -183,10 +183,10 @@ const TextRainGrass = () => {
         ctx.fill();
       }
 
-      // 단계 3: 비 내리기 시작
-      if (isDataLoaded && grassProgress >= 1 && timestamp - lastSpawnTime > 100) {
+      // 단계 3: 비 내리기 시작 (조금 더 천천히 듬성듬성 스폰)
+      if (isDataLoaded && grassProgress >= 1 && timestamp - lastSpawnTime > 250) {
         spawnRain();
-        spawnRain();
+        // spawnRain(); 한 개씩만 떨어지도록 수정
         lastSpawnTime = timestamp;
       }
 

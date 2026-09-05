@@ -125,7 +125,7 @@ const TextRainGrassLine = () => {
           return {
             char: item.word,
             color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
-            speed: 2 + Math.random() * 2, // 떨어지는 속도
+            speed: 1 + Math.random() * 1.5,
           };
         });
 
@@ -186,8 +186,7 @@ const TextRainGrassLine = () => {
       }
 
       // 단계 3: 비 내리기 시작
-      if (isDataLoaded && grassProgress >= 1 && timestamp - lastSpawnTime > 100) {
-        spawnRain();
+      if (isDataLoaded && grassProgress >= 1 && timestamp - lastSpawnTime > 250) {
         spawnRain();
         lastSpawnTime = timestamp;
       }
