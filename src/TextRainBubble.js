@@ -167,13 +167,12 @@ const TextRainBubble = () => {
           });
           
           if (cluster.y >= floorY) {
-            cluster.landed = true;
-            cluster.y = floorY;
-            
-            // 바닥에 닿으면 중심 단어(단어1)만 남기고, 붙어있던 위성(단어2)들을 자연스럽게 분리하여 떨어뜨림
-            const satellites = cluster.circles.filter(c => !c.isCenter);
-            satellites.forEach(c => {
-               detachedBubbles.push({
+            if (!cluster.shedSatellites) {
+              // 처음 닿는 순간: 위성들을 분리하고 단어1만 남김 (아직 landed 처리 안함 - 계속 낙하)
+              cluster.shedSatellites = true;
+              const satellites = cluster.circles.filter(c => !c.isCenter);
+              satellites.forEach(c => {
+                detachedBubbles.push({
                   word: c.word,
                   color: c.color,
                   radius: c.radius,
@@ -183,9 +182,17 @@ const TextRainBubble = () => {
                   pulseSpeed: c.pulseSpeed,
                   pulsePhase: c.pulsePhase,
                   fadeIn: c.fadeIn
-               });
-            });
-            cluster.circles = cluster.circles.filter(c => c.isCenter);
+                });
+              });
+              cluster.circles = cluster.circles.filter(c => c.isCenter);
+              // 위성 해체 후 floorY를 단어1 기준으로 재계산해서 즉시 올바른 위치로 이동
+              const centerRadius = cluster.circles.length > 0 ? cluster.circles[0].radius : 0;
+              cluster.y = height - 10 - centerRadius;
+            } else {
+              // 이미 위성이 분리된 상태 - 단어1이 최종 바닥에 안착
+              cluster.landed = true;
+              cluster.y = floorY;
+            }
           }
         }
 
