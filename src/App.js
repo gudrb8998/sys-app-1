@@ -10,6 +10,7 @@ import TextRainTree from "./TextRainTree";
 import TextRainBubble from "./TextRainBubble";
 import TextRainStackOverlap from "./TextRainStackOverlap";
 import TextRainStackWhite from "./TextRainStackWhite";
+import TextRainStackPreloaded from "./TextRainStackPreloaded";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/qr2" element={<QRCodeComponent2 />} />
         <Route path="/text-rain-stack" element={<TextRainStackOverlap />} />
         <Route path="/text-rain-stack-white" element={<TextRainStackWhite />} />
+        <Route path="/text-rain-stack-preloaded" element={<TextRainStackPreloaded />} />
         <Route path="/text-rain-tree" element={<TextRainTree />} />
         <Route path="/text-rain-bubble" element={<TextRainBubble />} />
       </Routes>
