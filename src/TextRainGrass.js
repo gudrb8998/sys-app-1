@@ -129,11 +129,14 @@ const TextRainGrass = () => {
           const lightness = 40 + (50 * freqRatio);
           const opacity = 0.5 + (0.5 * freqRatio);
           
+          const top5 = ['예술 감독', '전통 춤', '현대 무용', '문화 예술', '한국 무용'];
+          const isTop5 = top5.includes(item.word);
+          
           return {
             char: item.word,
             color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
             speed: 1 + Math.random() * 1.5,
-            targetScale: 1 + freqRatio * 0.5, // 빈도 높은 단어 커지는 비율 절반으로 감소 (최대 1.5배)
+            targetScale: isTop5 ? (1 + freqRatio * 0.5) : 1.0, // 상위 5개 단어만 커지도록 설정
           };
         });
 
