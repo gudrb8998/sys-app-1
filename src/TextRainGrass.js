@@ -145,12 +145,18 @@ const TextRainGrass = () => {
     const spawnRain = () => {
       if (sproutQueue.length > 0 && fallingDrops.length < 100) {
         const item = sproutQueue.shift();
-        const textWidth = ctx.measureText(item.char).width;
+        const baseTextWidth = ctx.measureText(item.char).width;
+        
+        // 떨어질 때부터 이미 커진 크기를 가지도록 설정
+        const scaledW = baseTextWidth * item.targetScale;
+        const scaledH = lineHeight * item.targetScale;
+
         fallingDrops.push({
           char: item.char,
-          x: Math.random() * (width - textWidth),
-          y: -lineHeight,
-          w: textWidth,
+          x: Math.random() * (width - scaledW),
+          y: -scaledH,
+          w: scaledW,
+          h: scaledH,
           color: item.color,
           speed: item.speed,
           targetScale: item.targetScale,
@@ -224,20 +230,8 @@ const TextRainGrass = () => {
       ctx.textBaseline = 'top';
       ctx.font = `bold ${fontSize}px sans-serif`;
 
-      // 쌓인 단어 그리기 및 자라나는(Scale) 애니메이션
+      // 쌓인 단어 그리기
       for (const sw of stackedWords) {
-        if (!sw.isBase) {
-          // 통통 튀는 애니메이션 제거: 1.0부터 시작해서 부드럽게 목표 크기까지 확대
-          if (sw.scaleY < sw.targetScale) {
-            sw.scaleY += 0.01;
-            if (sw.scaleY > sw.targetScale) sw.scaleY = sw.targetScale;
-          }
-          if (sw.scaleX < sw.targetScale) {
-            sw.scaleX += 0.01;
-            if (sw.scaleX > sw.targetScale) sw.scaleX = sw.targetScale;
-          }
-        }
-
         ctx.save();
 
         if (sw.isBase) {
@@ -246,17 +240,15 @@ const TextRainGrass = () => {
           const saturation = 80 - (80 * whiteProgress);
           ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
           
-          // 이미 물리적 좌표(x,y)가 계산되었으므로, 해당 위치에서 스케일만 적용
           ctx.translate(sw.x, sw.y);
           ctx.scale(baseScale, baseScale);
           ctx.fillText(sw.char, 0, 0);
         } else {
-          // 싹(ngram 데이터)은 할당받은 본래 색상 사용
+          // 싹(ngram 데이터)은 떨어질 때의 크기 그대로 렌더링 (애니메이션 제거)
           ctx.fillStyle = sw.color;
-          // 좌우 균형있게 커지도록 중앙 하단 기준
-          ctx.translate(sw.x + sw.w / 2, sw.y + sw.h);
-          ctx.scale(sw.scaleX, sw.scaleY);
-          ctx.fillText(sw.char, -sw.w / 2, -sw.h);
+          ctx.translate(sw.x, sw.y);
+          ctx.scale(sw.targetScale, sw.targetScale);
+          ctx.fillText(sw.char, 0, 0);
         }
 
         ctx.restore();
@@ -270,7 +262,7 @@ const TextRainGrass = () => {
         const grassY = getGrassCatchY(drop.x);
         
         // 바닥 단어와 풀숲 끝부분 중 더 높은 곳(Y값이 작은 곳)에 걸림
-        const stopY = Math.min(floorY, grassY) - lineHeight;
+        const stopY = Math.min(floorY, grassY) - drop.h;
 
         drop.y += drop.speed;
 
@@ -282,12 +274,10 @@ const TextRainGrass = () => {
             origX: drop.x,
             origY: stopY,
             origW: drop.w,
-            origH: lineHeight,
+            origH: drop.h,
             color: drop.color,
             w: drop.w,
-            h: lineHeight,
-            scaleX: 1.0,
-            scaleY: 1.0, // 0.1에서 시작하는 압축(튀는) 애니메이션 제거. 기본 1.0에서 목표 크기로 부드럽게 확대
+            h: drop.h,
             targetScale: drop.targetScale, // 최종 목표 크기
             isBase: false,
           });
@@ -295,8 +285,12 @@ const TextRainGrass = () => {
           continue;
         }
 
+        ctx.save();
         ctx.fillStyle = drop.color;
-        ctx.fillText(drop.char, drop.x, drop.y);
+        ctx.translate(drop.x, drop.y);
+        ctx.scale(drop.targetScale, drop.targetScale);
+        ctx.fillText(drop.char, 0, 0);
+        ctx.restore();
       }
 
       animationFrameId = requestAnimationFrame(render);

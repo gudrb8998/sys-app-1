@@ -145,14 +145,21 @@ const TextRainGrassLine = () => {
     const spawnRain = () => {
       if (sproutQueue.length > 0 && fallingDrops.length < 100) {
         const item = sproutQueue.shift();
-        const textWidth = ctx.measureText(item.char).width;
+        const baseTextWidth = ctx.measureText(item.char).width;
+
+        // 떨어질 때부터 이미 커진 크기를 가지도록 설정
+        const scaledW = baseTextWidth * item.targetScale;
+        const scaledH = lineHeight * item.targetScale;
+
         fallingDrops.push({
           char: item.char,
-          x: Math.random() * (width - textWidth),
-          y: -lineHeight,
-          w: textWidth,
+          x: Math.random() * (width - scaledW),
+          y: -scaledH,
+          w: scaledW,
+          h: scaledH,
           color: item.color,
           speed: item.speed,
+          targetScale: item.targetScale,
         });
       }
     };
@@ -237,18 +244,22 @@ const TextRainGrassLine = () => {
           ctx.scale(baseScale, baseScale);
           ctx.fillText(sw.char, 0, 0);
         } else {
-          // 싹(ngram 데이터)은 스케일 변환 없이 출력
+          // 싹(ngram 데이터)은 떨어질 때의 크기 그대로 렌더링
           ctx.fillStyle = sw.color;
-          ctx.fillText(sw.char, sw.x, sw.y);
+          ctx.translate(sw.x, sw.y);
+          ctx.scale(sw.targetScale, sw.targetScale);
+          ctx.fillText(sw.char, 0, 0);
 
-          // 싹(선) 그리기
+          // 싹(선) 그리기 (스케일 상태이므로 선의 높이를 스케일 역산하거나 0,0 기준에서 그립니다)
           if (sw.currentLineHeight > 0) {
             ctx.beginPath();
             ctx.strokeStyle = sw.color;
-            ctx.lineWidth = 2;
-            const centerX = sw.x + sw.w / 2;
-            ctx.moveTo(centerX, sw.y);
-            ctx.lineTo(centerX, sw.y - sw.currentLineHeight);
+            // 스케일된 상태이므로 선 두께 조절
+            ctx.lineWidth = 2 / sw.targetScale;
+            // 스케일된 좌표계에서의 중심 x
+            const localCenterX = (sw.w / sw.targetScale) / 2;
+            ctx.moveTo(localCenterX, 0);
+            ctx.lineTo(localCenterX, - (sw.currentLineHeight / sw.targetScale));
             ctx.stroke();
           }
         }
@@ -263,8 +274,7 @@ const TextRainGrassLine = () => {
         const floorY = getFloorY(drop.x, drop.w);
         const grassY = getGrassCatchY(drop.x);
         
-        // 바닥 단어와 풀숲 끝부분 중 더 높은 곳(Y값이 작은 곳)에 걸림
-        const stopY = Math.min(floorY, grassY) - lineHeight;
+        const stopY = Math.min(floorY, grassY) - drop.h;
 
         drop.y += drop.speed;
 
@@ -273,10 +283,14 @@ const TextRainGrassLine = () => {
             char: drop.char,
             x: drop.x,
             y: stopY,
+            origX: drop.x,
+            origY: stopY,
+            origW: drop.w,
+            origH: drop.h,
             color: drop.color,
             w: drop.w,
-            h: lineHeight,
-            scale: 1, // 글자는 즉시 나타남
+            h: drop.h,
+            targetScale: drop.targetScale,
             targetLineHeight: 10 + Math.random() * 30, // 싹(선)이 자라날 목표 높이
             currentLineHeight: 0,
             isBase: false,
@@ -285,8 +299,12 @@ const TextRainGrassLine = () => {
           continue;
         }
 
+        ctx.save();
         ctx.fillStyle = drop.color;
-        ctx.fillText(drop.char, drop.x, drop.y);
+        ctx.translate(drop.x, drop.y);
+        ctx.scale(drop.targetScale, drop.targetScale);
+        ctx.fillText(drop.char, 0, 0);
+        ctx.restore();
       }
 
       animationFrameId = requestAnimationFrame(render);
