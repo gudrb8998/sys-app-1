@@ -223,7 +223,7 @@ const TextRainGrass = () => {
         }
       }
 
-      const baseScale = 1 - (0.65 * whiteProgress); // 1.0 -> 0.35 (더 작아짐)
+      const baseScale = 1 - (0.45 * whiteProgress); // 1.0 -> 0.55
 
       // 물리적 좌표 업데이트 (토양)
       for (const sw of stackedWords) {
