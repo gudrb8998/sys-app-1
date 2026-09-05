@@ -182,7 +182,7 @@ const TextRainGrassLine = () => {
         if (whiteProgress > 1) whiteProgress = 1;
       }
 
-      const baseScale = 1 - (0.5 * whiteProgress);
+      const baseScale = 1 - (0.25 * whiteProgress); // 1.0 -> 0.75
 
       for (const sw of stackedWords) {
         if (sw.isBase) {

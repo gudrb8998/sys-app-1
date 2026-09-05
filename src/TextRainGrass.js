@@ -179,7 +179,7 @@ const TextRainGrass = () => {
         if (whiteProgress > 1) whiteProgress = 1;
       }
 
-      const baseScale = 1 - (0.5 * whiteProgress); // 1.0 -> 0.5 물리적 스케일
+      const baseScale = 1 - (0.25 * whiteProgress); // 1.0 -> 0.75 (기존 절반만큼만 축소)
 
       // 물리적 좌표 업데이트 (토양)
       for (const sw of stackedWords) {
