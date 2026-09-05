@@ -108,6 +108,7 @@ const TextRainBubble = () => {
       
       // 2. 군집 및 위성단어 업데이트
       clusters.forEach(cluster => {
+        if (!cluster.burst) {
         // 물리 엔진 (Circle Packing Relaxation)
         for (let iter = 0; iter < 6; iter++) {
           for (let i = 0; i < cluster.circles.length; i++) {
@@ -176,6 +177,8 @@ const TextRainBubble = () => {
             cluster.circles = []; // 껍데기만 남김
           }
         }
+
+        } // end if(!cluster.burst)
 
         // 대기 중인 연결어 스폰 (화면 상단에서 비처럼 떨어지도록 변경)
         if (cluster.pendingSatellites.length > 0 && timestamp - cluster.lastSatSpawnTime > 50) {
@@ -301,6 +304,7 @@ const TextRainBubble = () => {
       ctx.textBaseline = 'middle';
 
       clusters.forEach(cluster => {
+        if (cluster.burst) return;
         // 위성 먼저 렌더링
         cluster.circles.forEach(c => {
           if (c.isCenter) return;
