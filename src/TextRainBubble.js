@@ -46,7 +46,7 @@ const TextRainBubble = () => {
         
         sortedW1.forEach(w1 => {
           data[w1].sort((a, b) => b.freq - a.freq);
-          const topSatellites = data[w1].slice(0, 15);
+          const topSatellites = data[w1]; // 전체 단어 모두 포함
           
           spawnQueue.push({
             centerWord: w1,
@@ -86,7 +86,7 @@ const TextRainBubble = () => {
               isCenter: true, 
               dx: 0, 
               dy: 0, 
-              radius: 35, 
+              radius: 22, 
               word: item.centerWord,
               color: getRandomColor(),
               pulseSpeed: 0.002,
@@ -166,19 +166,19 @@ const TextRainBubble = () => {
           }
         }
 
-        // 대기 중인 연결어 스폰 (360도 전 방향에서 날아오도록 수정)
-        if (cluster.pendingSatellites.length > 0 && timestamp - cluster.lastSatSpawnTime > 150) {
+        // 대기 중인 연결어 스폰 (전체 단어가 나오므로 생성 주기를 50ms로 단축)
+        if (cluster.pendingSatellites.length > 0 && timestamp - cluster.lastSatSpawnTime > 50) {
           const satItem = cluster.pendingSatellites.shift();
           const spawnAngle = Math.random() * Math.PI * 2;
           const spawnDist = 180 + Math.random() * 50;
           
           freeBubbles.push({
             word: satItem.word,
+            color: getRandomColor(),
             x: cluster.x + Math.cos(spawnAngle) * spawnDist,
             y: cluster.y + Math.sin(spawnAngle) * spawnDist,
-            radius: 20,
+            radius: 12,
             targetCluster: cluster,
-            color: getRandomColor(),
             speed: 2.0 + Math.random() * 1.0, // 목표지점 향한 절대 속도
             pulseSpeed: 0.003 + Math.random() * 0.002,
             pulsePhase: Math.random() * Math.PI * 2
@@ -268,7 +268,7 @@ const TextRainBubble = () => {
           ctx.shadowBlur = 10;
           ctx.shadowColor = c.color;
           ctx.fillStyle = c.color;
-          ctx.font = `${12 * currentScale}px "Malgun Gothic", sans-serif`;
+          ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
           ctx.fillText(c.word, sx, sy);
           ctx.shadowBlur = 0;
         });
@@ -296,7 +296,7 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 15;
         ctx.shadowColor = center.color;
         ctx.fillStyle = center.color;
-        ctx.font = `bold ${16 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.font = `bold ${13 * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(center.word, cluster.x + center.dx, cluster.y + center.dy);
         ctx.shadowBlur = 0;
         
@@ -338,7 +338,7 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 10;
         ctx.shadowColor = bubble.color;
         ctx.fillStyle = bubble.color;
-        ctx.font = `${12 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(bubble.word, bubble.x, bubble.y);
         ctx.shadowBlur = 0;
       });
