@@ -41,7 +41,7 @@ const TextRainBubble = () => {
     };
     
     const render = (time) => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       spawnDrop(time);

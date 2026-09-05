@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import './TextRainStack.css';
 import { generateHangulPool, createRaindrop } from './textRainData';
 
-const TextRainStack = () => {
+const TextRainStackOverlap = () => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -20,28 +20,18 @@ const TextRainStack = () => {
     let fallingDrops = [];
     const maxActiveDrops = 100;
 
-    // 쌓인 단어 목록: { char, x, y, color, width }
+    // 쌓인 단어 목록 (겹침 허용)
     let stackedWords = [];
     let lastSpawnTime = 0;
     let isFadingOut = false;
     let fadeOutAlpha = 1.0;
 
     const fontSize = 18;
+    const lineHeight = fontSize + 4;
 
-    /**
-     * 떨어지는 단어가 쌓일 수 있는 y 위치를 계산합니다.
-     * 기존 쌓인 단어들과 겹치는지 확인하여 가장 높은 바닥을 반환합니다.
-     */
-    const getStackY = (dropX, dropWidth) => {
-      let floorY = height;
-      for (const sw of stackedWords) {
-        // x 범위가 겹치는지 확인
-        if (dropX + dropWidth > sw.x && dropX < sw.x + sw.width) {
-          floorY = Math.min(floorY, sw.y);
-        }
-      }
-      return floorY;
-    };
+    // 바닥에서 현재 쌓인 높이 (단순히 행 단위로 쌓임)
+    let currentStackRow = 0;
+    let currentRowX = 0;
 
     const spawnDrop = () => {
       if (fallingDrops.length < maxActiveDrops && !isFadingOut) {
@@ -60,6 +50,8 @@ const TextRainStack = () => {
       fallingDrops = [];
       isFadingOut = false;
       fadeOutAlpha = 1.0;
+      currentStackRow = 0;
+      currentRowX = 0;
     };
 
     window.addEventListener('resize', handleResize);
@@ -75,11 +67,8 @@ const TextRainStack = () => {
       }
 
       // 쌓인 높이 확인 → 80% 이상이면 페이드아웃
-      let minY = height;
-      for (const sw of stackedWords) {
-        if (sw.y < minY) minY = sw.y;
-      }
-      if (height - minY > height * 0.8 && !isFadingOut) {
+      const stackHeightPx = currentStackRow * lineHeight;
+      if (stackHeightPx > height * 0.8 && !isFadingOut) {
         isFadingOut = true;
       }
 
@@ -90,6 +79,8 @@ const TextRainStack = () => {
           fallingDrops = [];
           isFadingOut = false;
           fadeOutAlpha = 1.0;
+          currentStackRow = 0;
+          currentRowX = 0;
         }
       }
 
@@ -107,24 +98,33 @@ const TextRainStack = () => {
 
       // 떨어지는 단어 업데이트 및 그리기
       ctx.font = `bold ${fontSize}px sans-serif`;
+      const floorY = height - currentStackRow * lineHeight;
+
       for (let i = fallingDrops.length - 1; i >= 0; i--) {
         const drop = fallingDrops[i];
-        const textWidth = ctx.measureText(drop.char).width;
-
-        const stackY = getStackY(drop.x, textWidth);
 
         drop.y += drop.speed;
 
-        // 충돌 확인 (단어의 하단이 바닥/스택에 닿으면)
-        if (drop.y >= stackY) {
+        // 바닥(현재 쌓인 줄 높이)에 닿으면 쌓기
+        if (drop.y >= floorY) {
           if (!isFadingOut) {
+            const textWidth = ctx.measureText(drop.char).width;
+            const gap = 8;
+
+            // 현재 줄에 공간이 없으면 다음 줄로
+            if (currentRowX + textWidth > width) {
+              currentStackRow++;
+              currentRowX = 0;
+            }
+
             stackedWords.push({
               char: drop.char,
-              x: drop.x,
-              y: stackY,
+              x: currentRowX,
+              y: height - currentStackRow * lineHeight,
               color: drop.color,
-              width: textWidth,
             });
+
+            currentRowX += textWidth + gap;
           }
           fallingDrops.splice(i, 1);
           continue;
@@ -136,7 +136,6 @@ const TextRainStack = () => {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
 
-        // 글로우 효과
         ctx.shadowColor = drop.color;
         ctx.shadowBlur = 10;
 
@@ -164,4 +163,4 @@ const TextRainStack = () => {
   );
 };
 
-export default TextRainStack;
+export default TextRainStackOverlap;
