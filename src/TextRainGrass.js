@@ -49,13 +49,26 @@ const TextRainGrass = () => {
       return floorY;
     };
 
-    // 1. 200단어 베이스 세팅 (토양)
+    // 1. 200단어 베이스 세팅 (평평한 토양)
     const basePool = generateHangulPool();
     while (basePool.length > 0) {
       const drop = createRaindrop(width, basePool);
       if (!drop) break;
       const textWidth = ctx.measureText(drop.char).width;
-      const floorY = getFloorY(drop.x, textWidth);
+      
+      // 평평하게 쌓기 위해 가장 낮은 곳(y값이 가장 큰 곳)을 찾아 배치
+      let bestX = 0;
+      let maxDepth = 0;
+      for (let testX = 0; testX <= width - textWidth; testX += 30) {
+        const testFloorY = getFloorY(testX, textWidth);
+        if (testFloorY > maxDepth) {
+          maxDepth = testFloorY;
+          bestX = testX;
+        }
+      }
+      
+      drop.x = bestX;
+      const floorY = maxDepth;
       const stopY = floorY - lineHeight;
 
       stackedWords.push({
