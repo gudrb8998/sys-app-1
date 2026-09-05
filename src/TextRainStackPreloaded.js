@@ -22,8 +22,6 @@ const TextRainStackPreloaded = () => {
 
     let stackedWords = [];
     let lastSpawnTime = 0;
-    let isFadingOut = false;
-    let fadeOutAlpha = 1.0;
 
     const fontSize = 18;
     const lineHeight = fontSize + 4;
@@ -60,12 +58,12 @@ const TextRainStackPreloaded = () => {
       });
     }
 
-    // 미리 쌓은 후, 다시 위에서 떨어질 200단어 리필
-    wordPool.push(...generateHangulPool());
+    // 미리 쌓은 후, 추가로 비가 내리지 않게 풀을 리필하지 않음
+    // wordPool.push(...generateHangulPool());
     // ----------------------------
 
     const spawnDrop = () => {
-      if (fallingDrops.length < maxActiveDrops && !isFadingOut && wordPool.length > 0) {
+      if (fallingDrops.length < maxActiveDrops && wordPool.length > 0) {
         const drop = createRaindrop(width, wordPool);
         if (!drop) return;
         drop.size = fontSize;
@@ -80,8 +78,6 @@ const TextRainStackPreloaded = () => {
       canvas.height = height;
       stackedWords = [];
       fallingDrops = [];
-      isFadingOut = false;
-      fadeOutAlpha = 1.0;
     };
 
     window.addEventListener('resize', handleResize);
@@ -95,30 +91,9 @@ const TextRainStackPreloaded = () => {
         lastSpawnTime = timestamp;
       }
 
-      let minY = height;
-      for (const sw of stackedWords) {
-        if (sw.y < minY) minY = sw.y;
-      }
-      if (height - minY > height * 0.8 && !isFadingOut) {
-        isFadingOut = true;
-      }
+      // 정적 화면이므로 페이드아웃 로직 제거
 
-      if (wordPool.length === 0 && fallingDrops.length === 0 && !isFadingOut) {
-        isFadingOut = true;
-      }
-
-      if (isFadingOut) {
-        fadeOutAlpha -= 0.01;
-        if (fadeOutAlpha <= 0) {
-          stackedWords = [];
-          fallingDrops = [];
-          wordPool.push(...generateHangulPool());
-          isFadingOut = false;
-          fadeOutAlpha = 1.0;
-        }
-      }
-
-      ctx.globalAlpha = isFadingOut ? fadeOutAlpha : 1.0;
+      ctx.globalAlpha = 1.0;
       ctx.shadowBlur = 0;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
@@ -140,22 +115,20 @@ const TextRainStackPreloaded = () => {
         drop.y += drop.speed;
 
         if (drop.y >= stopY) {
-          if (!isFadingOut) {
-            stackedWords.push({
-              char: drop.char,
-              x: drop.x,
-              y: stopY,
-              color: drop.color,
-              w: textWidth,
-              h: lineHeight,
-            });
-          }
+          stackedWords.push({
+            char: drop.char,
+            x: drop.x,
+            y: stopY,
+            color: drop.color,
+            w: textWidth,
+            h: lineHeight,
+          });
           fallingDrops.splice(i, 1);
           continue;
         }
 
         ctx.fillStyle = drop.color;
-        ctx.globalAlpha = drop.opacity * (isFadingOut ? fadeOutAlpha : 1.0);
+        ctx.globalAlpha = drop.opacity;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fillText(drop.char, drop.x, drop.y);
