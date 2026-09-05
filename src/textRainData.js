@@ -1,26 +1,36 @@
-// 무작위 한글 200자 생성 및 공통 유틸리티
-
-// 한글 유니코드 범위: 가(0xAC00) ~ 힣(0xD7A3)
-const HANGUL_START = 0xac00;
-const HANGUL_COUNT = 11172;
+// 무용 관련 단어 풀 및 공통 유틸리티
 
 /**
- * 무작위 한글 글자 하나를 반환합니다.
+ * 무용/공연 관련 단어 목록 (200개)
  */
-export function getRandomHangul() {
-  const code = HANGUL_START + Math.floor(Math.random() * HANGUL_COUNT);
-  return String.fromCharCode(code);
-}
+const WORD_POOL = [
+  '춤', '공연', '작품', '무대', '무용', '예술', '무용수', '한국', '안무', '관객',
+  '안무가', '몸', '사람', '움직임', '전통', '음악', '발레', '말', '극장', '창작',
+  '작업', '문화', '활동', '다양', '시작', '자신', '세계', '공간', '지원', '축제',
+  '구성', '표현', '단체', '의미', '무용단', '이야기', '과정', '프로그램', '사회', '삶',
+  '영상', '인간', '모습', '참여', '예술감독', '지역', '예술가', '무용가', '선생', '문제',
+  '장면', '주제', '서울', '동작', '부분', '현대', '중요', '즉흥', '선정', '시대',
+  '대표', '방식', '사업', '현대무용', '중심', '국제', '상황', '존재', '여성', '해외',
+  '역사', '경험', '관계', '장르', '변화', '기획', '역할', '댄스', '이상', '소리',
+  '상', '내용', '개인', '소개', '행사', '운영', '연구', '문화예술', '국내', '제작',
+  '현실', '예정', '마음', '초청', '단원', '현장', '프로젝트', '연출', '등장', '일본',
+  '자연', '국립발레단', '발전', '발레단', '사랑', '대상', '기대', '조명', '출연', '감각',
+  '교육', '이미지', '영화', '대중', '관심', '기회', '시도', '관련', '힘', '활용',
+  '전체', '준비', '해석', '교수', '연극', '대학', '감정', '형식', '공모', '발표',
+  '이해', '기억', '의식', '페스티벌', '시각', '의상', '자유', '신체', '방법', '인',
+  '한국무용', '미국', '노력', '예술인', '공공', '흐름', '프랑스', '주목', '길', '확장',
+  '관람', '이유', '전문', '고민', '형태', '레퍼토리', '사실', '신작', '초연', '댄서',
+  '공연장', '지속', '이름', '눈', '부산', '언어', '소통', '분야', '작가', '느낌',
+  '국립현대무용단', '구조', '질문', '작', '팀', '요소', '개최', '국립무용단', '가치', '결과',
+  '연결', '일상', '기록', '마련', '환경', '제공', '남성', '학교', '반복', '국가',
+  '집중', '손', '평가', '동시', '방향', '세상', '참가', '개념', '인식', '몸짓',
+];
 
 /**
- * count개의 무작위 한글 글자 배열을 반환합니다.
+ * 단어 풀을 반환합니다.
  */
-export function generateHangulPool(count = 200) {
-  const pool = [];
-  for (let i = 0; i < count; i++) {
-    pool.push(getRandomHangul());
-  }
-  return pool;
+export function generateHangulPool() {
+  return [...WORD_POOL];
 }
 
 /**
@@ -32,16 +42,20 @@ export function getRandomColor() {
 }
 
 /**
- * 떨어지는 글자 하나의 초기 상태를 생성합니다.
+ * 떨어지는 단어 하나의 초기 상태를 생성합니다.
+ * 풀에서 단어를 꺼내어 사용하므로 중복되지 않습니다.
  */
 export function createRaindrop(canvasWidth, pool) {
-  const char = pool[Math.floor(Math.random() * pool.length)];
+  if (pool.length === 0) return null;
+  const index = Math.floor(Math.random() * pool.length);
+  const char = pool.splice(index, 1)[0];
+  const size = 14 + Math.floor(Math.random() * 10);
   return {
     char,
-    x: Math.random() * canvasWidth,
-    y: -30,
+    x: Math.random() * (canvasWidth - char.length * size),
+    y: -40,
     speed: 1 + Math.random() * 3,
-    size: 16 + Math.floor(Math.random() * 20),
+    size,
     color: getRandomColor(),
     opacity: 0.7 + Math.random() * 0.3,
   };

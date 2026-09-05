@@ -23,9 +23,10 @@ const TextRainBubble = () => {
     window.addEventListener('resize', handleResize);
     
     const spawnDrop = (time) => {
-      if (drops.length < 120 && time - lastSpawnTime > 80) {
+      if (drops.length < 120 && time - lastSpawnTime > 80 && pool.length > 0) {
         const drop = createRaindrop(canvas.width, pool);
-        
+        if (!drop) return;
+
         // Add bubble-specific properties
         drop.pulseSpeed = 0.001 + Math.random() * 0.002;
         drop.pulsePhase = Math.random() * Math.PI * 2;
@@ -34,14 +35,14 @@ const TextRainBubble = () => {
         drop.driftAmount = 20 + Math.random() * 20;
         drop.state = 'falling'; // 'falling' or 'popping'
         drop.popScale = 1;
-        
+
         drops.push(drop);
         lastSpawnTime = time;
       }
     };
     
     const render = (time) => {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       spawnDrop(time);
@@ -103,6 +104,11 @@ const TextRainBubble = () => {
         // Reset
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
+      }
+
+      // 200단어 모두 소진 + 떨어지는 단어 없으면 풀 재생성
+      if (pool.length === 0 && drops.length === 0) {
+        pool.push(...generateHangulPool());
       }
       
       animationFrameId = requestAnimationFrame(render);

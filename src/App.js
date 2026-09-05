@@ -6,9 +6,10 @@ import Question from "./Question";
 import QRCodeComponent from './QRCodeComponent';
 import AudienceTypeTest from "./AudienceTypeTest";
 import QRCodeComponent2 from "./QRCodeComponent2";
-import TextRainStack from "./TextRainStack";
 import TextRainTree from "./TextRainTree";
 import TextRainBubble from "./TextRainBubble";
+import TextRainStackOverlap from "./TextRainStackOverlap";
+import TextRainStackWhite from "./TextRainStackWhite";
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
         <Route path="/test" element={<AudienceTypeTest />} />
         <Route path="/qr" element={<QRCodeComponent />} />
         <Route path="/qr2" element={<QRCodeComponent2 />} />
-        <Route path="/text-rain-stack" element={<TextRainStack />} />
+        <Route path="/text-rain-stack" element={<TextRainStackOverlap />} />
+        <Route path="/text-rain-stack-white" element={<TextRainStackWhite />} />
         <Route path="/text-rain-tree" element={<TextRainTree />} />
         <Route path="/text-rain-bubble" element={<TextRainBubble />} />
       </Routes>

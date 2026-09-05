@@ -100,6 +100,7 @@ const TextRainTree = () => {
           fadeAlpha = 1;
           isFading = false;
           caughtDrops = [];
+          pool.push(...generateHangulPool());
           generateTree(); // Regenerate tree for a new cycle
         }
       }
@@ -108,11 +109,12 @@ const TextRainTree = () => {
       
       // Spawn new falling characters
       spawnTimer += deltaTime;
-      if (spawnTimer > 100 && !isFading) {
+      if (spawnTimer > 100 && !isFading && pool.length > 0) {
         // Spawn 1-3 characters at a time
-        const count = Math.floor(Math.random() * 3) + 1;
+        const count = Math.min(Math.floor(Math.random() * 3) + 1, pool.length);
         for (let i = 0; i < count; i++) {
-          raindrops.push(createRaindrop(width, pool));
+          const drop = createRaindrop(width, pool);
+          if (drop) raindrops.push(drop);
         }
         spawnTimer = 0;
       }
@@ -184,6 +186,11 @@ const TextRainTree = () => {
       
       // Check full condition
       if (caughtDrops.length >= 40 && !isFading) {
+        isFading = true;
+      }
+
+      // 200단어 모두 소진 + 떨어지는 단어 없으면 페이드아웃 → 재시작
+      if (pool.length === 0 && raindrops.length === 0 && !isFading) {
         isFading = true;
       }
       
