@@ -60,12 +60,16 @@ const TextRainSprout = () => {
         char: drop.char,
         x: drop.x,
         y: stopY,
-        color: '#666666', // 토양은 눈에 띄지 않게 어두운 회색으로 처리하거나 기존 색상 유지
+        color: drop.color,
+        hue: drop.color.match(/\d+/)[0],
         w: textWidth,
         h: lineHeight,
         scale: 1, // 토양은 이미 완성 상태
+        isBase: true,
       });
     }
+
+    let whiteProgress = 0;
     
     // 2. CSV 로드 및 Sprout 큐 준비
     fetch(ngramCsvPath)
@@ -133,6 +137,8 @@ const TextRainSprout = () => {
       height = window.innerHeight;
       canvas.width = width;
       canvas.height = height;
+      // 화면이 리사이즈되면 깔끔하게 처음부터 다시 시작 (데이터 큐 등은 유지 불가하므로 리로드 유도 또는 단순 캔버스 조정)
+      // 여기서는 캔버스 크기만 맞춥니다.
     };
 
     window.addEventListener('resize', handleResize);
@@ -141,13 +147,16 @@ const TextRainSprout = () => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
 
-      // 일정 주기로 스폰 (한 번에 여러 개 스폰하여 빠르게 자라게 함)
-      if (isDataLoaded && timestamp - lastSpawnTime > 20) {
+      // 토양 단어들이 하얀색으로 변환되는 진행도
+      if (whiteProgress < 1) {
+        whiteProgress += 0.003;
+        if (whiteProgress > 1) whiteProgress = 1;
+      }
+
+      // 싹은 하얀색 변환이 끝난 후에 천천히 나타나기 시작
+      if (isDataLoaded && whiteProgress >= 1 && timestamp - lastSpawnTime > 150) {
         spawnSprout();
-        spawnSprout();
-        spawnSprout();
-        spawnSprout();
-        spawnSprout();
+        spawnSprout(); // 한 번에 2개씩만 스폰 (기존 5개에서 감소)
         lastSpawnTime = timestamp;
       }
 
@@ -156,13 +165,21 @@ const TextRainSprout = () => {
       ctx.textBaseline = 'top';
 
       for (const sw of stackedWords) {
-        // 자라나는 애니메이션
+        // 자라나는 애니메이션 속도 감소 (기존 0.05 -> 0.02)
         if (sw.scale < 1) {
-          sw.scale += 0.05;
+          sw.scale += 0.02;
           if (sw.scale > 1) sw.scale = 1;
         }
 
-        ctx.fillStyle = sw.color;
+        if (sw.isBase) {
+          // 토양(200단어)은 서서히 하얀색으로 변환
+          const lightness = 65 + (35 * whiteProgress);
+          const saturation = 80 - (80 * whiteProgress);
+          ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
+        } else {
+          // 싹(ngram 데이터)은 할당받은 본래 색상 사용
+          ctx.fillStyle = sw.color;
+        }
         
         // Scale 애니메이션 적용을 위한 transform (하단 고정, 위로 자라남)
         ctx.save();
