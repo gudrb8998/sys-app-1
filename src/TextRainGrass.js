@@ -133,6 +133,7 @@ const TextRainGrass = () => {
             char: item.word,
             color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
             speed: 1 + Math.random() * 1.5,
+            targetScale: 1 + freqRatio * 1.0, // 빈도가 높을수록 최대 2배까지 커짐
           };
         });
 
@@ -152,6 +153,7 @@ const TextRainGrass = () => {
           w: textWidth,
           color: item.color,
           speed: item.speed,
+          targetScale: item.targetScale,
         });
       }
     };
@@ -224,14 +226,23 @@ const TextRainGrass = () => {
 
       // 쌓인 단어 그리기 및 자라나는(Scale) 애니메이션
       for (const sw of stackedWords) {
-        if (!sw.isBase && sw.scale < 1) {
-          sw.scale += 0.02;
-          if (sw.scale > 1) sw.scale = 1;
+        if (!sw.isBase) {
+          // Y축 자라나기
+          if (sw.scaleY < sw.targetScale) {
+            sw.scaleY += 0.02;
+            if (sw.scaleY > sw.targetScale) sw.scaleY = sw.targetScale;
+          }
+          // X축 자라나기 (목표 크기까지)
+          if (sw.scaleX < sw.targetScale) {
+            sw.scaleX += 0.02;
+            if (sw.scaleX > sw.targetScale) sw.scaleX = sw.targetScale;
+          }
         }
 
         ctx.save();
 
         if (sw.isBase) {
+          // 토양(200단어)은 하얀색으로 변하며 서서히 작아짐 (1.0 -> 0.5)
           const lightness = 65 + (35 * whiteProgress);
           const saturation = 80 - (80 * whiteProgress);
           ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
@@ -243,10 +254,10 @@ const TextRainGrass = () => {
         } else {
           // 싹(ngram 데이터)은 할당받은 본래 색상 사용
           ctx.fillStyle = sw.color;
-          // 좌측 하단을 기준으로 위로 길어짐
-          ctx.translate(sw.x, sw.y + sw.h);
-          ctx.scale(1, sw.scale);
-          ctx.fillText(sw.char, 0, -sw.h);
+          // 좌우 균형있게 커지도록 중앙 하단 기준
+          ctx.translate(sw.x + sw.w / 2, sw.y + sw.h);
+          ctx.scale(sw.scaleX, sw.scaleY);
+          ctx.fillText(sw.char, -sw.w / 2, -sw.h);
         }
 
         ctx.restore();
@@ -272,7 +283,9 @@ const TextRainGrass = () => {
             color: drop.color,
             w: drop.w,
             h: lineHeight,
-            scale: 0.1, // 압축된 상태에서 자라남
+            scaleX: 1.0,
+            scaleY: 0.1, // y축으로 납작한 상태에서 시작
+            targetScale: drop.targetScale, // 최종 목표 크기
             isBase: false,
           });
           fallingDrops.splice(i, 1);
