@@ -35,15 +35,7 @@ const TextRainGrass = () => {
     let sproutQueue = [];
     let isDataLoaded = false;
 
-    // 풀숲 실루엣 생성
-    let grassBlades = [];
-    for (let i = 0; i < 40; i++) {
-      grassBlades.push({
-        x: Math.random() * width,
-        height: 100 + Math.random() * 300,
-        controlX: (Math.random() - 0.5) * 150,
-      });
-    }
+
 
     const getFloorY = (dropX, dropW) => {
       let floorY = height;
@@ -57,19 +49,7 @@ const TextRainGrass = () => {
       return floorY;
     };
 
-    const getGrassCatchY = (dropX) => {
-      let catchY = height;
-      for (const blade of grassBlades) {
-        // 풀 끝부분 근처(±20px)에 떨어지면 걸림
-        if (Math.abs(dropX - blade.x) < 20) {
-          const tipY = height - blade.height;
-          if (tipY < catchY) catchY = tipY;
-        }
-      }
-      return catchY;
-    };
-
-    // 1. 200단어 베이스 세팅
+    // 1. 200단어 베이스 세팅 (토양)
     const basePool = generateHangulPool();
     while (basePool.length > 0) {
       const drop = createRaindrop(width, basePool);
@@ -90,6 +70,29 @@ const TextRainGrass = () => {
         isBase: true,
       });
     }
+
+    // 2. 풀숲 실루엣 생성 (토양 위에 얕게)
+    let grassBlades = [];
+    for (let x = 0; x < width; x += 15) {
+      const soilY = getFloorY(x, 10); // 해당 x 위치의 토양(바닥) 높이
+      grassBlades.push({
+        x: x,
+        y: soilY, // 풀이 자라나는 시작점
+        height: 20 + Math.random() * 50, // 얕은 풀 (20~70px)
+        controlX: (Math.random() - 0.5) * 30,
+      });
+    }
+
+    const getGrassCatchY = (dropX) => {
+      let catchY = height;
+      for (const blade of grassBlades) {
+        if (Math.abs(dropX - blade.x) < 15) {
+          const tipY = blade.y - blade.height;
+          if (tipY < catchY) catchY = tipY;
+        }
+      }
+      return catchY;
+    };
 
     let whiteProgress = 0;
     let grassProgress = 0;
@@ -172,12 +175,11 @@ const TextRainGrass = () => {
       if (grassProgress > 0) {
         ctx.fillStyle = `rgba(51, 51, 51, ${0.4 * grassProgress})`;
         ctx.beginPath();
-        ctx.moveTo(0, height);
         grassBlades.forEach(blade => {
-          ctx.quadraticCurveTo(blade.x - 20 + blade.controlX, height - blade.height/2, blade.x, height - blade.height);
-          ctx.quadraticCurveTo(blade.x + 20 + blade.controlX, height - blade.height/2, blade.x + 20, height);
+          ctx.moveTo(blade.x - 10, blade.y);
+          ctx.quadraticCurveTo(blade.x - 10 + blade.controlX, blade.y - blade.height/2, blade.x, blade.y - blade.height);
+          ctx.quadraticCurveTo(blade.x + 10 + blade.controlX, blade.y - blade.height/2, blade.x + 10, blade.y);
         });
-        ctx.lineTo(width, height);
         ctx.fill();
       }
 
