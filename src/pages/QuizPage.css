@@ -1,0 +1,252 @@
+/* src/pages/QuizPage.css */
+.quiz-page {
+  min-height: 100vh;
+  background: #0d0d0d;
+  color: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  font-family: 'Noto Sans KR', sans-serif;
+  box-sizing: border-box;
+}
+
+/* ── 시작 화면 ── */
+.quiz-start {
+  text-align: center;
+  max-width: 560px;
+}
+
+.quiz-start h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.quiz-start p {
+  font-size: 1.05rem;
+  color: #aaa;
+  line-height: 1.8;
+  margin-bottom: 48px;
+}
+
+/* ── 질문 화면 ── */
+.quiz-question {
+  max-width: 620px;
+  width: 100%;
+}
+
+.quiz-progress {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 16px;
+  letter-spacing: 0.05em;
+}
+
+.quiz-question h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quiz-option-btn {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 18px 22px;
+  text-align: left;
+  color: #e8e8e8;
+  font-size: 1rem;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.quiz-option-btn:hover {
+  background: #252525;
+  border-color: #555;
+}
+
+.quiz-option-label {
+  font-weight: 700;
+  color: #777;
+  flex-shrink: 0;
+  min-width: 20px;
+}
+
+.quiz-back-btn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 32px;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+
+.quiz-back-btn:hover {
+  color: #999;
+}
+
+/* ── 결과 화면 ── */
+.quiz-result {
+  max-width: 600px;
+  width: 100%;
+}
+
+.quiz-result-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.quiz-result-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 28px;
+  line-height: 1.4;
+}
+
+.quiz-result-card {
+  border-radius: 16px;
+  border-left: 4px solid;
+  padding: 28px 28px;
+  margin-bottom: 20px;
+  background: #161616;
+}
+
+.quiz-result-card p {
+  font-size: 0.98rem;
+  line-height: 1.9;
+  color: #ccc;
+  white-space: pre-line;
+  margin-bottom: 20px;
+}
+
+.quiz-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.quiz-keyword-tag {
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid;
+  opacity: 0.85;
+}
+
+/* ── 입력 화면 ── */
+.quiz-input-screen {
+  max-width: 560px;
+  width: 100%;
+}
+
+.quiz-input-screen h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.quiz-input-screen p {
+  font-size: 0.95rem;
+  color: #888;
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+
+.quiz-textarea-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.quiz-textarea {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 18px 20px;
+  font-size: 1rem;
+  color: #f0f0f0;
+  resize: none;
+  height: 120px;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.6;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.quiz-textarea:focus {
+  border-color: #555;
+}
+
+.quiz-char-count {
+  text-align: right;
+  font-size: 0.82rem;
+  color: #555;
+  margin-bottom: 28px;
+}
+
+/* ── 완료 화면 ── */
+.quiz-done {
+  text-align: center;
+  max-width: 480px;
+}
+
+.quiz-done h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.quiz-done p {
+  font-size: 1rem;
+  color: #888;
+  line-height: 1.8;
+  margin-bottom: 40px;
+}
+
+.quiz-countdown {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* ── 공통 버튼 ── */
+.quiz-primary-btn {
+  background: #f0f0f0;
+  color: #0d0d0d;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 40px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.quiz-primary-btn:hover {
+  opacity: 0.85;
+}
+
+.quiz-primary-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
