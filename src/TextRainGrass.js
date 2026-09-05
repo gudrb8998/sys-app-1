@@ -49,26 +49,14 @@ const TextRainGrass = () => {
       return floorY;
     };
 
-    // 1. 200단어 베이스 세팅 (평평한 토양)
+    // 1. 200단어 베이스 세팅 (랜덤 토양)
     const basePool = generateHangulPool();
     while (basePool.length > 0) {
       const drop = createRaindrop(width, basePool);
       if (!drop) break;
       const textWidth = ctx.measureText(drop.char).width;
       
-      // 평평하게 쌓기 위해 가장 낮은 곳(y값이 가장 큰 곳)을 찾아 배치
-      let bestX = 0;
-      let maxDepth = 0;
-      for (let testX = 0; testX <= width - textWidth; testX += 30) {
-        const testFloorY = getFloorY(testX, textWidth);
-        if (testFloorY > maxDepth) {
-          maxDepth = testFloorY;
-          bestX = testX;
-        }
-      }
-      
-      drop.x = bestX;
-      const floorY = maxDepth;
+      const floorY = getFloorY(drop.x, textWidth);
       const stopY = floorY - lineHeight;
 
       stackedWords.push({
@@ -211,22 +199,32 @@ const TextRainGrass = () => {
       // 쌓인 단어 그리기 및 자라나는(Scale) 애니메이션
       for (const sw of stackedWords) {
         if (!sw.isBase && sw.scale < 1) {
-          sw.scale += 0.05;
+          sw.scale += 0.02;
           if (sw.scale > 1) sw.scale = 1;
         }
 
+        ctx.save();
+
         if (sw.isBase) {
+          // 토양(200단어)은 하얀색으로 변하며 서서히 작아짐 (1.0 -> 0.5)
           const lightness = 65 + (35 * whiteProgress);
           const saturation = 80 - (80 * whiteProgress);
           ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
+          
+          const currentScale = 1 - (0.5 * whiteProgress);
+          // 단어 중앙 하단을 기준으로 축소
+          ctx.translate(sw.x + sw.w / 2, sw.y + sw.h);
+          ctx.scale(currentScale, currentScale);
+          ctx.fillText(sw.char, -sw.w / 2, -sw.h);
         } else {
+          // 싹(ngram 데이터)은 할당받은 본래 색상 사용
           ctx.fillStyle = sw.color;
+          // 좌측 하단을 기준으로 위로 길어짐
+          ctx.translate(sw.x, sw.y + sw.h);
+          ctx.scale(1, sw.scale);
+          ctx.fillText(sw.char, 0, -sw.h);
         }
 
-        ctx.save();
-        ctx.translate(sw.x, sw.y + sw.h);
-        ctx.scale(1, sw.scale);
-        ctx.fillText(sw.char, 0, -sw.h);
         ctx.restore();
       }
 

@@ -49,26 +49,14 @@ const TextRainGrassLine = () => {
       return floorY;
     };
 
-    // 1. 200단어 베이스 세팅 (평평한 토양)
+    // 1. 200단어 베이스 세팅 (랜덤 토양)
     const basePool = generateHangulPool();
     while (basePool.length > 0) {
       const drop = createRaindrop(width, basePool);
       if (!drop) break;
       const textWidth = ctx.measureText(drop.char).width;
 
-      // 평평하게 쌓기 위해 가장 낮은 곳(y값이 가장 큰 곳)을 찾아 배치
-      let bestX = 0;
-      let maxDepth = 0;
-      for (let testX = 0; testX <= width - textWidth; testX += 30) {
-        const testFloorY = getFloorY(testX, textWidth);
-        if (testFloorY > maxDepth) {
-          maxDepth = testFloorY;
-          bestX = testX;
-        }
-      }
-
-      drop.x = bestX;
-      const floorY = maxDepth;
+      const floorY = getFloorY(drop.x, textWidth);
       const stopY = floorY - lineHeight;
 
       stackedWords.push({
@@ -215,26 +203,37 @@ const TextRainGrassLine = () => {
           sw.currentLineHeight += 0.5;
         }
 
+        ctx.save();
+
         if (sw.isBase) {
+          // 토양(200단어)은 하얀색으로 변하며 서서히 작아짐 (1.0 -> 0.5)
           const lightness = 65 + (35 * whiteProgress);
           const saturation = 80 - (80 * whiteProgress);
           ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
+
+          const currentScale = 1 - (0.5 * whiteProgress);
+          // 단어 중앙 하단을 기준으로 축소
+          ctx.translate(sw.x + sw.w / 2, sw.y + sw.h);
+          ctx.scale(currentScale, currentScale);
+          ctx.fillText(sw.char, -sw.w / 2, -sw.h);
         } else {
+          // 싹(ngram 데이터)은 스케일 변환 없이 출력
           ctx.fillStyle = sw.color;
+          ctx.fillText(sw.char, sw.x, sw.y);
+
+          // 싹(선) 그리기
+          if (sw.currentLineHeight > 0) {
+            ctx.beginPath();
+            ctx.strokeStyle = sw.color;
+            ctx.lineWidth = 2;
+            const centerX = sw.x + sw.w / 2;
+            ctx.moveTo(centerX, sw.y);
+            ctx.lineTo(centerX, sw.y - sw.currentLineHeight);
+            ctx.stroke();
+          }
         }
 
-        ctx.fillText(sw.char, sw.x, sw.y);
-
-        // 싹(선) 그리기
-        if (!sw.isBase && sw.currentLineHeight > 0) {
-          ctx.beginPath();
-          ctx.strokeStyle = sw.color;
-          ctx.lineWidth = 2;
-          const centerX = sw.x + sw.w / 2;
-          ctx.moveTo(centerX, sw.y);
-          ctx.lineTo(centerX, sw.y - sw.currentLineHeight);
-          ctx.stroke();
-        }
+        ctx.restore();
       }
 
       // 떨어지는 비 그리기 및 충돌 계산
