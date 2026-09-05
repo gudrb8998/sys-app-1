@@ -44,8 +44,9 @@ const TextRainStack = () => {
     };
 
     const spawnDrop = () => {
-      if (fallingDrops.length < maxActiveDrops && !isFadingOut) {
+      if (fallingDrops.length < maxActiveDrops && !isFadingOut && wordPool.length > 0) {
         const drop = createRaindrop(width, wordPool);
+        if (!drop) return;
         drop.size = fontSize;
         fallingDrops.push(drop);
       }

@@ -108,11 +108,12 @@ const TextRainTree = () => {
       
       // Spawn new falling characters
       spawnTimer += deltaTime;
-      if (spawnTimer > 100 && !isFading) {
+      if (spawnTimer > 100 && !isFading && pool.length > 0) {
         // Spawn 1-3 characters at a time
-        const count = Math.floor(Math.random() * 3) + 1;
+        const count = Math.min(Math.floor(Math.random() * 3) + 1, pool.length);
         for (let i = 0; i < count; i++) {
-          raindrops.push(createRaindrop(width, pool));
+          const drop = createRaindrop(width, pool);
+          if (drop) raindrops.push(drop);
         }
         spawnTimer = 0;
       }

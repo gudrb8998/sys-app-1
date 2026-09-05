@@ -43,9 +43,12 @@ export function getRandomColor() {
 
 /**
  * 떨어지는 단어 하나의 초기 상태를 생성합니다.
+ * 풀에서 단어를 꺼내어 사용하므로 중복되지 않습니다.
  */
 export function createRaindrop(canvasWidth, pool) {
-  const char = pool[Math.floor(Math.random() * pool.length)];
+  if (pool.length === 0) return null;
+  const index = Math.floor(Math.random() * pool.length);
+  const char = pool.splice(index, 1)[0];
   const size = 14 + Math.floor(Math.random() * 10);
   return {
     char,
