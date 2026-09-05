@@ -88,11 +88,17 @@ const TextRainStackOverlap = () => {
         isFadingOut = true;
       }
 
+      // 200단어 모두 소진 + 떨어지는 단어 없으면 페이드아웃 → 재시작
+      if (wordPool.length === 0 && fallingDrops.length === 0 && !isFadingOut) {
+        isFadingOut = true;
+      }
+
       if (isFadingOut) {
         fadeOutAlpha -= 0.01;
         if (fadeOutAlpha <= 0) {
           stackedWords = [];
           fallingDrops = [];
+          wordPool.push(...generateHangulPool());
           isFadingOut = false;
           fadeOutAlpha = 1.0;
         }

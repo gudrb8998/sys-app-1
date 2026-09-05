@@ -100,6 +100,7 @@ const TextRainTree = () => {
           fadeAlpha = 1;
           isFading = false;
           caughtDrops = [];
+          pool.push(...generateHangulPool());
           generateTree(); // Regenerate tree for a new cycle
         }
       }
@@ -185,6 +186,11 @@ const TextRainTree = () => {
       
       // Check full condition
       if (caughtDrops.length >= 40 && !isFading) {
+        isFading = true;
+      }
+
+      // 200단어 모두 소진 + 떨어지는 단어 없으면 페이드아웃 → 재시작
+      if (pool.length === 0 && raindrops.length === 0 && !isFading) {
         isFading = true;
       }
       

@@ -105,6 +105,11 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
       }
+
+      // 200단어 모두 소진 + 떨어지는 단어 없으면 풀 재생성
+      if (pool.length === 0 && drops.length === 0) {
+        pool.push(...generateHangulPool());
+      }
       
       animationFrameId = requestAnimationFrame(render);
     };
