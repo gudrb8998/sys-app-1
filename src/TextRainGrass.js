@@ -223,7 +223,7 @@ const TextRainGrass = () => {
         }
       }
 
-      const baseScale = 1 - (0.25 * whiteProgress); // 1.0 -> 0.75 (기존 절반만큼만 축소)
+      const baseScale = 1 - (0.65 * whiteProgress); // 1.0 -> 0.35 (더 작아짐)
 
       // 물리적 좌표 업데이트 (토양)
       for (const sw of stackedWords) {
@@ -287,10 +287,12 @@ const TextRainGrass = () => {
         }
 
         if (sw.isBase) {
-          // 토양(200단어)은 하얀색으로 변하며 서서히 작아짐 (1.0 -> 0.5)
-          const lightness = 65 + (35 * whiteProgress);
-          const saturation = 80 - (80 * whiteProgress);
-          ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
+          // 토양(200단어)은 풀잎 초록색으로 변하며 서서히 작아짐
+          const targetHue = 115; // 풀잎 초록
+          const blendedHue = Number(sw.hue) + (targetHue - Number(sw.hue)) * whiteProgress;
+          const saturation = 80 - (20 * whiteProgress); // 채도 유지 (80->60)
+          const lightness = 65 - (25 * whiteProgress);  // 밝기 낮춤 (65->40, 풀잎처럼 진하게)
+          ctx.fillStyle = `hsl(${blendedHue}, ${saturation}%, ${lightness}%)`;
           
           ctx.translate(sw.x, sw.y);
           ctx.scale(baseScale, baseScale);
