@@ -1,8 +1,16 @@
 import React, { useRef, useEffect } from 'react';
-import './TextRainStack.css';
+import './TextRainStackWhite.css';
 import { generateHangulPool, createRaindrop } from './textRainData';
 
-const TextRainStack = () => {
+/**
+ * 흰 배경에서 잘 보이는 진한 색상을 반환합니다.
+ */
+function getDarkColor() {
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 35%)`;
+}
+
+const TextRainStackWhite = () => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -20,24 +28,21 @@ const TextRainStack = () => {
     let fallingDrops = [];
     const maxActiveDrops = 100;
 
-    // 쌓인 단어 목록: { char, x, y, color, width }
     let stackedWords = [];
     let lastSpawnTime = 0;
     let isFadingOut = false;
     let fadeOutAlpha = 1.0;
 
     const fontSize = 18;
+    const lineHeight = fontSize + 4;
 
-    /**
-     * 떨어지는 단어가 쌓일 수 있는 y 위치를 계산합니다.
-     * 기존 쌓인 단어들과 겹치는지 확인하여 가장 높은 바닥을 반환합니다.
-     */
-    const getStackY = (dropX, dropWidth) => {
+    const getFloorY = (dropX, dropW) => {
       let floorY = height;
       for (const sw of stackedWords) {
-        // x 범위가 겹치는지 확인
-        if (dropX + dropWidth > sw.x && dropX < sw.x + sw.width) {
-          floorY = Math.min(floorY, sw.y);
+        if (dropX + dropW > sw.x && dropX < sw.x + sw.w) {
+          if (sw.y < floorY) {
+            floorY = sw.y;
+          }
         }
       }
       return floorY;
@@ -48,6 +53,7 @@ const TextRainStack = () => {
         const drop = createRaindrop(width, wordPool);
         if (!drop) return;
         drop.size = fontSize;
+        drop.color = getDarkColor();
         fallingDrops.push(drop);
       }
     };
@@ -66,8 +72,8 @@ const TextRainStack = () => {
     window.addEventListener('resize', handleResize);
 
     const render = (timestamp) => {
-      // 캔버스 클리어
-      ctx.fillStyle = '#000000';
+      // 캔버스 클리어 (흰 배경)
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
 
       if (timestamp - lastSpawnTime > 120) {
@@ -75,7 +81,7 @@ const TextRainStack = () => {
         lastSpawnTime = timestamp;
       }
 
-      // 쌓인 높이 확인 → 80% 이상이면 페이드아웃
+      // 쌓인 최고 높이 확인 → 80% 이상이면 페이드아웃
       let minY = height;
       for (const sw of stackedWords) {
         if (sw.y < minY) minY = sw.y;
@@ -104,7 +110,7 @@ const TextRainStack = () => {
       ctx.globalAlpha = isFadingOut ? fadeOutAlpha : 1.0;
       ctx.shadowBlur = 0;
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'bottom';
+      ctx.textBaseline = 'top';
       for (const sw of stackedWords) {
         ctx.fillStyle = sw.color;
         ctx.font = `bold ${fontSize}px sans-serif`;
@@ -118,19 +124,20 @@ const TextRainStack = () => {
         const drop = fallingDrops[i];
         const textWidth = ctx.measureText(drop.char).width;
 
-        const stackY = getStackY(drop.x, textWidth);
+        const floorY = getFloorY(drop.x, textWidth);
+        const stopY = floorY - lineHeight;
 
         drop.y += drop.speed;
 
-        // 충돌 확인 (단어의 하단이 바닥/스택에 닿으면)
-        if (drop.y >= stackY) {
+        if (drop.y >= stopY) {
           if (!isFadingOut) {
             stackedWords.push({
               char: drop.char,
               x: drop.x,
-              y: stackY,
+              y: stopY,
               color: drop.color,
-              width: textWidth,
+              w: textWidth,
+              h: lineHeight,
             });
           }
           fallingDrops.splice(i, 1);
@@ -141,11 +148,10 @@ const TextRainStack = () => {
         ctx.fillStyle = drop.color;
         ctx.globalAlpha = drop.opacity * (isFadingOut ? fadeOutAlpha : 1.0);
         ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
+        ctx.textBaseline = 'top';
 
-        // 글로우 효과
         ctx.shadowColor = drop.color;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 6;
 
         ctx.fillText(drop.char, drop.x, drop.y);
 
@@ -165,10 +171,10 @@ const TextRainStack = () => {
   }, []);
 
   return (
-    <div className="text-rain-stack-container">
-      <canvas ref={canvasRef} className="text-rain-stack-canvas" />
+    <div className="text-rain-stack-white-container">
+      <canvas ref={canvasRef} className="text-rain-stack-white-canvas" />
     </div>
   );
 };
 
-export default TextRainStack;
+export default TextRainStackWhite;
