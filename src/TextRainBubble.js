@@ -99,7 +99,7 @@ const TextRainBubble = () => {
           pendingSatellites: item.satellites,
           lastSatSpawnTime: timestamp,
           landed: false,
-          speedY: 0.6 + Math.random() * 0.4,
+          speedY: 0.25 + Math.random() * 0.15,
           driftPhase: Math.random() * Math.PI * 2,
           satellitesSpawned: 0
         };
@@ -210,7 +210,7 @@ const TextRainBubble = () => {
             radius: Math.max(14, satItem.word.length * 6), // 글자 수에 비례하여 버블 크기 할당 (글씨 겹침 방지)
             targetCluster: cluster,
             targetAngle: cluster.satellitesSpawned * 2.39996, // 황금각(Golden Angle)을 사용하여 정확히 360도 고르게 분포
-            speed: 3.0 + Math.random() * 1.5, // 위성 날아오는 속도
+            speed: 1.2 + Math.random() * 0.8, // 위성 날아오는 속도
             pulseSpeed: 0.003 + Math.random() * 0.002,
             pulsePhase: Math.random() * Math.PI * 2
           });
