@@ -165,20 +165,19 @@ const TextRainBubble = () => {
           }
         }
 
-        // 대기 중인 연결어 스폰 (전체 단어가 나오므로 생성 주기를 50ms로 단축)
+        // 대기 중인 연결어 스폰 (화면 상단에서 비처럼 떨어지도록 변경)
         if (cluster.pendingSatellites.length > 0 && timestamp - cluster.lastSatSpawnTime > 50) {
           const satItem = cluster.pendingSatellites.shift();
-          const spawnAngle = Math.random() * Math.PI * 2;
-          const spawnDist = 180 + Math.random() * 50;
           
           freeBubbles.push({
             word: satItem.word,
             color: getRandomColor(),
-            x: cluster.x + Math.cos(spawnAngle) * spawnDist,
-            y: cluster.y + Math.sin(spawnAngle) * spawnDist,
+            x: Math.random() * width, // 화면 전체 X 랜덤
+            y: -50 - Math.random() * 100, // 화면 상단
             radius: 12,
             targetCluster: cluster,
-            speed: 2.0 + Math.random() * 1.0, // 목표지점 향한 절대 속도
+            targetAngle: Math.random() * Math.PI * 2, // 사방으로 붙기 위해 목표 각도 설정
+            speed: 2.5 + Math.random() * 1.5, // 중심단어보다 빠른 유도 미사일
             pulseSpeed: 0.003 + Math.random() * 0.002,
             pulsePhase: Math.random() * Math.PI * 2
           });
@@ -191,8 +190,13 @@ const TextRainBubble = () => {
         const bubble = freeBubbles[i];
         const target = bubble.targetCluster;
 
-        const dx = target.x - bubble.x;
-        const dy = target.y - bubble.y;
+        // 단순히 중심이 아니라 사방(targetAngle)을 향해 날아가도록 목표점 계산
+        const aimDist = target.circles[0].radius + 20; 
+        const aimX = target.x + Math.cos(bubble.targetAngle) * aimDist;
+        const aimY = target.y + Math.sin(bubble.targetAngle) * aimDist;
+
+        const dx = aimX - bubble.x;
+        const dy = aimY - bubble.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist > 0) {
