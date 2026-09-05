@@ -14,6 +14,7 @@ import TextRainStackPreloaded from "./TextRainStackPreloaded";
 import TextRainSprout from "./TextRainSprout";
 import TextRainGrass from "./TextRainGrass";
 import TextRainGrassLine from "./TextRainGrassLine";
+import TextRainBubbleDrop from "./TextRainBubbleDrop";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
         <Route path="/text-rain-grass-line" element={<TextRainGrassLine />} />
         <Route path="/text-rain-tree" element={<TextRainTree />} />
         <Route path="/text-rain-bubble" element={<TextRainBubble />} />
+        <Route path="/text-rain-bubble-drop" element={<TextRainBubbleDrop />} />
       </Routes>
     </Router>
   );

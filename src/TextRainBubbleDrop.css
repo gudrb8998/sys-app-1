@@ -1,0 +1,12 @@
+.text-rain-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #fdfbf7; /* 약간 따뜻한 화이트/아이보리 배경 (노란 버블이 잘 보이도록) */
+  margin: 0;
+  padding: 0;
+}
+
+canvas {
+  display: block;
+}
