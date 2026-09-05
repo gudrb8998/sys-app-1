@@ -17,7 +17,8 @@ const TextRainBubble = () => {
     const targetCenterWords = ['공간', '관객', '구성', '극장', '무용수', '안무', '예술', '움직임', '음악', '창작', '춤', '표현'];
     
     let clusters = []; 
-    let freeBubbles = []; 
+    let freeBubbles = [];
+    let scatteredBubbles = []; 
     let spawnQueue = []; 
 
     let animationFrameId;
@@ -141,27 +142,37 @@ const TextRainBubble = () => {
           cluster.x += Math.sin(timestamp * 0.001 + cluster.driftPhase) * 0.3;
           
           // 바닥 및 다른 클러스터 충돌 체크
-          const myBottomExt = Math.max(...cluster.circles.map(c => c.dy + c.radius));
+          const myBottomExt = cluster.circles.length > 0 ? Math.max(...cluster.circles.map(c => c.dy + c.radius)) : 0;
           let floorY = height - 10 - myBottomExt;
-          
-          clusters.forEach(other => {
-            if (other !== cluster && other.landed) {
-              const myLeft = cluster.x + Math.min(...cluster.circles.map(c => c.dx - c.radius));
-              const myRight = cluster.x + Math.max(...cluster.circles.map(c => c.dx + c.radius));
-              const otherLeft = other.x + Math.min(...other.circles.map(c => c.dx - c.radius));
-              const otherRight = other.x + Math.max(...other.circles.map(c => c.dx + c.radius));
-              
-              if (myRight > otherLeft && myLeft < otherRight) {
-                const otherTop = other.y + Math.min(...other.circles.map(c => c.dy - c.radius));
-                const catchY = otherTop - myBottomExt - 5;
-                if (catchY < floorY) floorY = catchY;
-              }
-            }
-          });
           
           if (cluster.y >= floorY) {
             cluster.landed = true;
+            cluster.burst = true;
             cluster.y = floorY;
+            
+            // 군집 해체 및 사방으로 흩어지기
+            cluster.circles.forEach(c => {
+               const globalX = cluster.x + c.dx;
+               const globalY = cluster.y + c.dy;
+               
+               // 중심에서 바깥쪽으로 튕겨나가는 속도 부여
+               const vx = c.dx === 0 ? (Math.random() - 0.5) * 4 : (c.dx * 0.1) + (Math.random() - 0.5) * 2;
+               const vy = c.dy === 0 ? -Math.random() * 4 : (c.dy * 0.1) - Math.random() * 4;
+
+               scatteredBubbles.push({
+                  isCenter: c.isCenter,
+                  word: c.word,
+                  color: c.color,
+                  radius: c.radius,
+                  x: globalX,
+                  y: globalY,
+                  vx: vx,
+                  vy: vy,
+                  pulseSpeed: c.pulseSpeed,
+                  pulsePhase: c.pulsePhase
+               });
+            });
+            cluster.circles = []; // 껍데기만 남김
           }
         }
 
@@ -195,7 +206,24 @@ const TextRainBubble = () => {
         const aimX = target.x + Math.cos(bubble.targetAngle) * aimDist;
         const aimY = target.y + Math.sin(bubble.targetAngle) * aimDist;
 
-        const dx = aimX - bubble.x;
+        
+        if (target.burst || target.circles.length === 0) {
+          scatteredBubbles.push({
+            isCenter: false,
+            word: bubble.word,
+            color: bubble.color,
+            radius: bubble.radius,
+            x: bubble.x,
+            y: bubble.y,
+            vx: (Math.random() - 0.5) * 4,
+            vy: bubble.speed,
+            pulseSpeed: bubble.pulseSpeed,
+            pulsePhase: bubble.pulsePhase
+          });
+          freeBubbles.splice(i, 1);
+          continue;
+        }
+const dx = aimX - bubble.x;
         const dy = aimY - bubble.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
@@ -232,7 +260,40 @@ const TextRainBubble = () => {
         }
       }
 
-            // 4. 렌더링
+            // 3.5 흩어진 물방울들 물리 (중력 및 상호 밀어내기)
+      scatteredBubbles.forEach(b => {
+         b.vy += 0.2; // 중력
+         b.x += b.vx;
+         b.y += b.vy;
+         b.vx *= 0.98; // 마찰
+         
+         if (b.y > height - b.radius) {
+            b.y = height - b.radius;
+            b.vy *= -0.3; // 바닥 바운스
+            b.vx *= 0.8;
+         }
+      });
+      
+      // 서로 밀어내어 바닥에 예쁘게 쌓이도록 (Relaxation 1 pass)
+      for (let i = 0; i < scatteredBubbles.length; i++) {
+        for (let j = i + 1; j < scatteredBubbles.length; j++) {
+           const b1 = scatteredBubbles[i];
+           const b2 = scatteredBubbles[j];
+           const dx = b2.x - b1.x;
+           const dy = b2.y - b1.y;
+           const dist = Math.sqrt(dx*dx + dy*dy) || 0.1;
+           const minDist = b1.radius + b2.radius;
+           if (dist < minDist) {
+              const overlap = minDist - dist;
+              const nx = (dx/dist) * overlap * 0.5;
+              const ny = (dy/dist) * overlap * 0.5;
+              b1.x -= nx; b1.y -= ny;
+              b2.x += nx; b2.y += ny;
+           }
+        }
+      }
+
+      // 4. 렌더링
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
@@ -324,6 +385,30 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 0;
       });
 
+
+      scatteredBubbles.forEach(b => {
+        const currentScale = 1.0 + Math.sin(timestamp * b.pulseSpeed + b.pulsePhase) * (b.isCenter ? 0.05 : 0.1);
+        const currentRadius = b.radius * currentScale;
+        
+        ctx.globalAlpha = 0.05;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.globalAlpha = 0.3;
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = b.isCenter ? 2 : 1.5;
+        ctx.stroke();
+
+        ctx.globalAlpha = 1.0;
+        ctx.shadowBlur = b.isCenter ? 15 : 10;
+        ctx.shadowColor = b.color;
+        ctx.fillStyle = b.color;
+        ctx.font = b.isCenter ? `bold ${20 * currentScale}px "Malgun Gothic", sans-serif` : `${9 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.fillText(b.word, b.x, b.y);
+        ctx.shadowBlur = 0;
+      });
       animationFrameId = requestAnimationFrame(render);
     };
 
