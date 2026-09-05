@@ -66,7 +66,8 @@ const TextRainBubbleDrop = () => {
     window.addEventListener('resize', handleResize);
     
     const render = (timestamp) => {
-      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
 
       // 1. 군집 생성
       if (timestamp - lastClusterSpawnTime > 2000 && spawnQueue.length > 0) {
