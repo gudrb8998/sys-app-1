@@ -287,12 +287,11 @@ const TextRainGrass = () => {
         }
 
         if (sw.isBase) {
-          // 토양(200단어)은 풀잎 초록색으로 변하며 서서히 작아짐
-          const targetHue = 115; // 풀잎 초록
-          const blendedHue = Number(sw.hue) + (targetHue - Number(sw.hue)) * whiteProgress;
-          const saturation = 80 - (20 * whiteProgress); // 채도 유지 (80->60)
-          const lightness = 65 - (25 * whiteProgress);  // 밝기 낮춤 (65->40, 풀잎처럼 진하게)
-          ctx.fillStyle = `hsl(${blendedHue}, ${saturation}%, ${lightness}%)`;
+          // 토양(200단어)은 풀 그림자 색(#333, 어두운 회색)으로 변하며 서서히 작아짐
+          const r = Math.round(255 - (255 - 51) * whiteProgress);
+          const g = Math.round(255 - (255 - 51) * whiteProgress);
+          const b = Math.round(255 - (255 - 51) * whiteProgress);
+          ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
           
           ctx.translate(sw.x, sw.y);
           ctx.scale(baseScale, baseScale);
