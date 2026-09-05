@@ -72,7 +72,6 @@ const TextRainBubbleDrop = () => {
       if (timestamp - lastClusterSpawnTime > 2000 && spawnQueue.length > 0) {
         const item = spawnQueue.shift();
         
-        // 화면을 4개의 레인으로 나누어 고르게 떨어지도록 배치 (너무 높게 쌓이는 것 방지)
         const lane = clustersSpawned % 4;
         const laneWidth = width / 4;
         const startX = laneWidth * lane + laneWidth / 2 + (Math.random() - 0.5) * (laneWidth * 0.5);
@@ -80,13 +79,13 @@ const TextRainBubbleDrop = () => {
         const newCluster = {
           x: startX,
           y: -50,
-          radius: 35, // 초기 중심 버블 크기
-          word: item.centerWord,
-          satellites: [],
+          circles: [
+            { isCenter: true, dx: 0, dy: 0, radius: 35, word: item.centerWord }
+          ],
           pendingSatellites: item.satellites,
           lastSatSpawnTime: timestamp,
           landed: false,
-          speedY: 0.6 + Math.random() * 0.4, // 매우 천천히 떨어짐
+          speedY: 0.6 + Math.random() * 0.4,
         };
         clusters.push(newCluster);
         clustersSpawned++;
@@ -95,17 +94,52 @@ const TextRainBubbleDrop = () => {
       
       // 2. 군집 및 위성단어 업데이트
       clusters.forEach(cluster => {
+        // 물리 엔진 (Circle Packing Relaxation)
+        for (let iter = 0; iter < 3; iter++) {
+          for (let i = 0; i < cluster.circles.length; i++) {
+            for (let j = i + 1; j < cluster.circles.length; j++) {
+              const c1 = cluster.circles[i];
+              const c2 = cluster.circles[j];
+              const dx = c2.dx - c1.dx;
+              const dy = c2.dy - c1.dy;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+              const minDist = c1.radius + c2.radius + 1.0; // 1px 여백
+              
+              if (dist < minDist) {
+                const pushDist = (minDist - dist) * 0.5;
+                const nx = (dx / dist) * pushDist;
+                const ny = (dy / dist) * pushDist;
+                
+                if (!c1.isCenter && !c2.isCenter) {
+                  c1.dx -= nx; c1.dy -= ny;
+                  c2.dx += nx; c2.dy += ny;
+                } else if (c1.isCenter && !c2.isCenter) {
+                  c2.dx += nx * 2; c2.dy += ny * 2;
+                } else if (!c1.isCenter && c2.isCenter) {
+                  c1.dx -= nx * 2; c1.dy -= ny * 2;
+                }
+              }
+            }
+          }
+        }
+
         if (!cluster.landed) {
           cluster.y += cluster.speedY;
           
           // 바닥 및 다른 클러스터 충돌 체크
-          let floorY = height - cluster.radius - 10;
+          const myBottomExt = Math.max(...cluster.circles.map(c => c.dy + c.radius));
+          let floorY = height - 10 - myBottomExt;
+          
           clusters.forEach(other => {
             if (other !== cluster && other.landed) {
-              const dx = other.x - cluster.x;
-              // x축으로 겹치는 경우에만 쌓임
-              if (Math.abs(dx) < (cluster.radius + other.radius + 15)) {
-                const catchY = other.y - (other.radius + cluster.radius) * 0.9; 
+              const myLeft = cluster.x + Math.min(...cluster.circles.map(c => c.dx - c.radius));
+              const myRight = cluster.x + Math.max(...cluster.circles.map(c => c.dx + c.radius));
+              const otherLeft = other.x + Math.min(...other.circles.map(c => c.dx - c.radius));
+              const otherRight = other.x + Math.max(...other.circles.map(c => c.dx + c.radius));
+              
+              if (myRight > otherLeft && myLeft < otherRight) {
+                const otherTop = other.y + Math.min(...other.circles.map(c => c.dy - c.radius));
+                const catchY = otherTop - myBottomExt - 5;
                 if (catchY < floorY) floorY = catchY;
               }
             }
@@ -117,7 +151,7 @@ const TextRainBubbleDrop = () => {
           }
         }
 
-        // 대기 중인 연결어 스폰 (조금 빠르게 여러개가 붙도록 시간차 조절)
+        // 대기 중인 연결어 스폰
         if (cluster.pendingSatellites.length > 0 && timestamp - cluster.lastSatSpawnTime > 150) {
           const satItem = cluster.pendingSatellites.shift();
           
@@ -127,7 +161,7 @@ const TextRainBubbleDrop = () => {
             y: cluster.y - 120 - Math.random() * 50,
             radius: 20,
             targetCluster: cluster,
-            speedY: 2.5 + Math.random(), // 중심단어보다 빠른 낙하
+            speedY: 2.5 + Math.random(),
           });
           cluster.lastSatSpawnTime = timestamp;
         }
@@ -140,25 +174,37 @@ const TextRainBubbleDrop = () => {
 
         const dx = target.x - bubble.x;
         const dy = target.y - bubble.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
+        const dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist > 0) {
-          bubble.x += (dx / dist) * 2.0; // 타겟을 향해 이동
+          bubble.x += (dx / dist) * 2.0;
         }
         bubble.y += bubble.speedY;
 
-        // 타겟에 도달하여 달라붙음
-        if (dist < target.radius + bubble.radius * 0.8) {
-          const angle = Math.atan2(bubble.y - target.y, bubble.x - target.x);
-          
-          target.satellites.push({
+        // 타겟 군집의 '아무 원'에나 닿았는지 체크
+        let hit = false;
+        for (const c of target.circles) {
+          const globalCX = target.x + c.dx;
+          const globalCY = target.y + c.dy;
+          const hitDist = Math.hypot(globalCX - bubble.x, globalCY - bubble.y);
+          if (hitDist < c.radius + bubble.radius) {
+            hit = true;
+            break;
+          }
+        }
+
+        if (hit) {
+          // 닿은 현재 위치 그대로 추가 (릴랙세이션이 알아서 밀어냄)
+          target.circles.push({
+            isCenter: false,
             word: bubble.word,
-            angle: angle,
-            radius: bubble.radius
+            radius: bubble.radius,
+            dx: bubble.x - target.x,
+            dy: bubble.y - target.y
           });
           
-          // 붙을 때마다 중심 버블 크기 비례해서 증가
-          target.radius += 2.5;
+          // 중심 버블 크기 증가
+          target.circles[0].radius += 1.5;
           
           freeBubbles.splice(i, 1);
         }
@@ -168,36 +214,35 @@ const TextRainBubbleDrop = () => {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      // 군집 그리기 (연결어가 뒤에 그려지도록 위성 먼저 렌더링)
       clusters.forEach(cluster => {
-        cluster.satellites.forEach(sat => {
-          // 중심 버블의 표면 근처에 붙도록 거리 계산
-          const dist = cluster.radius + sat.radius * 0.3;
-          const sx = cluster.x + Math.cos(sat.angle) * dist;
-          const sy = cluster.y + Math.sin(sat.angle) * dist;
+        // 위성 먼저 렌더링
+        cluster.circles.forEach(c => {
+          if (c.isCenter) return;
+          const sx = cluster.x + c.dx;
+          const sy = cluster.y + c.dy;
           
           ctx.beginPath();
-          ctx.arc(sx, sy, sat.radius, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 241, 118, 0.7)'; // 연한 노란색
+          ctx.arc(sx, sy, c.radius, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 241, 118, 0.7)';
           ctx.fill();
 
-          ctx.fillStyle = '#1976d2'; // 연한 파란 글씨
+          ctx.fillStyle = '#1976d2';
           ctx.font = '12px sans-serif';
-          ctx.fillText(sat.word, sx, sy);
+          ctx.fillText(c.word, sx, sy);
         });
 
-        // 중심 단어 그리기
+        // 중심 단어 나중에 (위로 오게)
+        const center = cluster.circles[0];
         ctx.beginPath();
-        ctx.arc(cluster.x, cluster.y, cluster.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(253, 216, 53, 1.0)'; // 진한 노란색
+        ctx.arc(cluster.x + center.dx, cluster.y + center.dy, center.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(253, 216, 53, 1.0)';
         ctx.fill();
 
-        ctx.fillStyle = '#0d47a1'; // 짙은 파란 글씨
+        ctx.fillStyle = '#0d47a1';
         ctx.font = 'bold 16px sans-serif';
-        ctx.fillText(cluster.word, cluster.x, cluster.y);
+        ctx.fillText(center.word, cluster.x + center.dx, cluster.y + center.dy);
       });
 
-      // 대기/자유낙하 중인 연결어 렌더링
       freeBubbles.forEach(bubble => {
         ctx.beginPath();
         ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
