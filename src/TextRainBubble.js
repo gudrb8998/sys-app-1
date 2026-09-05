@@ -239,6 +239,23 @@ const TextRainBubble = () => {
         }
 
         if (hit) {
+          if (target.shedSatellites) {
+            // 이미 군집이 바닥에 닿아 위성들을 모두 해체한 상태라면, 지각한 위성은 붙지 않고 즉시 바닥으로 떨어짐
+            detachedBubbles.push({
+              word: bubble.word,
+              color: bubble.color,
+              radius: bubble.radius,
+              x: bubble.x,
+              y: bubble.y,
+              vy: 0,
+              pulseSpeed: bubble.pulseSpeed,
+              pulsePhase: bubble.pulsePhase,
+              fadeIn: 1.0
+            });
+            freeBubbles.splice(i, 1);
+            continue;
+          }
+
           // 닿는 순간 그 자리에서 서서히 사라지도록 fadingOutBubbles에 추가
           fadingOutBubbles.push({
             word: bubble.word,
