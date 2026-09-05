@@ -80,12 +80,22 @@ const TextRainBubbleDrop = () => {
           x: startX,
           y: -50,
           circles: [
-            { isCenter: true, dx: 0, dy: 0, radius: 35, word: item.centerWord }
+            { 
+              isCenter: true, 
+              dx: 0, 
+              dy: 0, 
+              radius: 35, 
+              word: item.centerWord,
+              pulseSpeed: 0.002,
+              pulsePhase: Math.random() * Math.PI * 2
+            }
           ],
           pendingSatellites: item.satellites,
           lastSatSpawnTime: timestamp,
           landed: false,
           speedY: 0.6 + Math.random() * 0.4,
+          driftPhase: Math.random() * Math.PI * 2, // 좌우 흔들림 위상
+          ripples: [] // 합체 시 팝 이펙트를 위한 배열
         };
         clusters.push(newCluster);
         clustersSpawned++;
@@ -125,6 +135,8 @@ const TextRainBubbleDrop = () => {
 
         if (!cluster.landed) {
           cluster.y += cluster.speedY;
+          // Effect 2: 좌우 흔들림 (Drift)
+          cluster.x += Math.sin(timestamp * 0.001 + cluster.driftPhase) * 0.3;
           
           // 바닥 및 다른 클러스터 충돌 체크
           const myBottomExt = Math.max(...cluster.circles.map(c => c.dy + c.radius));
@@ -151,17 +163,21 @@ const TextRainBubbleDrop = () => {
           }
         }
 
-        // 대기 중인 연결어 스폰
+        // 대기 중인 연결어 스폰 (360도 전 방향에서 날아오도록 수정)
         if (cluster.pendingSatellites.length > 0 && timestamp - cluster.lastSatSpawnTime > 150) {
           const satItem = cluster.pendingSatellites.shift();
+          const spawnAngle = Math.random() * Math.PI * 2;
+          const spawnDist = 180 + Math.random() * 50;
           
           freeBubbles.push({
             word: satItem.word,
-            x: cluster.x + (Math.random() - 0.5) * 200,
-            y: cluster.y - 120 - Math.random() * 50,
+            x: cluster.x + Math.cos(spawnAngle) * spawnDist,
+            y: cluster.y + Math.sin(spawnAngle) * spawnDist,
             radius: 20,
             targetCluster: cluster,
-            speedY: 2.5 + Math.random(),
+            speed: 2.0 + Math.random() * 1.0, // 목표지점 향한 절대 속도
+            pulseSpeed: 0.003 + Math.random() * 0.002,
+            pulsePhase: Math.random() * Math.PI * 2
           });
           cluster.lastSatSpawnTime = timestamp;
         }
@@ -177,9 +193,9 @@ const TextRainBubbleDrop = () => {
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist > 0) {
-          bubble.x += (dx / dist) * 2.0;
+          bubble.x += (dx / dist) * bubble.speed;
+          bubble.y += (dy / dist) * bubble.speed;
         }
-        bubble.y += bubble.speedY;
 
         // 타겟 군집의 '아무 원'에나 닿았는지 체크
         let hit = false;
@@ -194,13 +210,21 @@ const TextRainBubbleDrop = () => {
         }
 
         if (hit) {
-          // 닿은 현재 위치 그대로 추가 (릴랙세이션이 알아서 밀어냄)
           target.circles.push({
             isCenter: false,
             word: bubble.word,
             radius: bubble.radius,
             dx: bubble.x - target.x,
-            dy: bubble.y - target.y
+            dy: bubble.y - target.y,
+            pulseSpeed: bubble.pulseSpeed,
+            pulsePhase: bubble.pulsePhase
+          });
+          
+          // Effect 4: 합체 시 Pop(물결) 이펙트 추가
+          target.ripples.push({
+            dx: bubble.x - target.x,
+            dy: bubble.y - target.y,
+            startTime: timestamp
           });
           
           freeBubbles.splice(i, 1);
@@ -218,37 +242,83 @@ const TextRainBubbleDrop = () => {
           const sx = cluster.x + c.dx;
           const sy = cluster.y + c.dy;
           
+          // Effect 1: 숨쉬기 (Pulse)
+          const currentScale = 1.0 + Math.sin(timestamp * c.pulseSpeed + c.pulsePhase) * 0.1;
+          const currentRadius = c.radius * currentScale;
+          
           ctx.beginPath();
-          ctx.arc(sx, sy, c.radius, 0, Math.PI * 2);
+          ctx.arc(sx, sy, currentRadius, 0, Math.PI * 2);
           ctx.fillStyle = 'rgba(255, 241, 118, 0.7)';
           ctx.fill();
+          
+          // Effect 3: 외곽선(Stroke) 및 글로우(Glow)
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
 
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = 'rgba(255, 241, 118, 0.8)';
           ctx.fillStyle = '#1976d2';
-          ctx.font = '12px sans-serif';
+          ctx.font = `${12 * currentScale}px sans-serif`;
           ctx.fillText(c.word, sx, sy);
+          ctx.shadowBlur = 0; // 초기화
         });
 
-        // 중심 단어 나중에 (위로 오게)
+        // 중심 단어 렌더링
         const center = cluster.circles[0];
+        const currentScale = 1.0 + Math.sin(timestamp * center.pulseSpeed + center.pulsePhase) * 0.05;
+        const currentRadius = center.radius * currentScale;
+        
         ctx.beginPath();
-        ctx.arc(cluster.x + center.dx, cluster.y + center.dy, center.radius, 0, Math.PI * 2);
+        ctx.arc(cluster.x + center.dx, cluster.y + center.dy, currentRadius, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(253, 216, 53, 1.0)';
         ctx.fill();
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(253, 216, 53, 1.0)';
         ctx.fillStyle = '#0d47a1';
-        ctx.font = 'bold 16px sans-serif';
+        ctx.font = `bold ${16 * currentScale}px sans-serif`;
         ctx.fillText(center.word, cluster.x + center.dx, cluster.y + center.dy);
+        ctx.shadowBlur = 0;
+        
+        // Effect 4: 합체 시 물결(Ripple) 이펙트 렌더링
+        cluster.ripples = cluster.ripples.filter(r => timestamp - r.startTime < 400);
+        cluster.ripples.forEach(r => {
+          const progress = (timestamp - r.startTime) / 400; // 0 ~ 1
+          const rx = cluster.x + r.dx;
+          const ry = cluster.y + r.dy;
+          
+          ctx.beginPath();
+          ctx.arc(rx, ry, 20 + progress * 20, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 255, 255, ${1 - progress})`;
+          ctx.lineWidth = 3 * (1 - progress);
+          ctx.stroke();
+        });
       });
 
       freeBubbles.forEach(bubble => {
+        const currentScale = 1.0 + Math.sin(timestamp * bubble.pulseSpeed + bubble.pulsePhase) * 0.1;
+        const currentRadius = bubble.radius * currentScale;
+        
         ctx.beginPath();
-        ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+        ctx.arc(bubble.x, bubble.y, currentRadius, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 241, 118, 0.7)'; 
         ctx.fill();
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(255, 241, 118, 0.8)';
         ctx.fillStyle = '#1976d2';
-        ctx.font = '12px sans-serif';
+        ctx.font = `${12 * currentScale}px sans-serif`;
         ctx.fillText(bubble.word, bubble.x, bubble.y);
+        ctx.shadowBlur = 0;
       });
 
       animationFrameId = requestAnimationFrame(render);
