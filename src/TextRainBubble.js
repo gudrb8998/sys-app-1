@@ -98,7 +98,8 @@ const TextRainBubble = () => {
           lastSatSpawnTime: timestamp,
           landed: false,
           speedY: 0.6 + Math.random() * 0.4,
-          driftPhase: Math.random() * Math.PI * 2
+          driftPhase: Math.random() * Math.PI * 2,
+          satellitesSpawned: 0
         };
         clusters.push(newCluster);
         clustersSpawned++;
@@ -108,7 +109,7 @@ const TextRainBubble = () => {
       // 2. 군집 및 위성단어 업데이트
       clusters.forEach(cluster => {
         // 물리 엔진 (Circle Packing Relaxation)
-        for (let iter = 0; iter < 3; iter++) {
+        for (let iter = 0; iter < 6; iter++) {
           for (let i = 0; i < cluster.circles.length; i++) {
             for (let j = i + 1; j < cluster.circles.length; j++) {
               const c1 = cluster.circles[i];
@@ -185,13 +186,14 @@ const TextRainBubble = () => {
             color: getRandomColor(),
             x: Math.random() * width, // 화면 전체 X 랜덤
             y: -50 - Math.random() * 100, // 화면 상단
-            radius: 12,
+            radius: Math.max(14, satItem.word.length * 6), // 글자 수에 비례하여 버블 크기 할당 (글씨 겹침 방지)
             targetCluster: cluster,
-            targetAngle: Math.random() * Math.PI * 2, // 사방으로 붙기 위해 목표 각도 설정
+            targetAngle: cluster.satellitesSpawned * 2.39996, // 황금각(Golden Angle)을 사용하여 정확히 360도 고르게 분포
             speed: 2.5 + Math.random() * 1.5, // 중심단어보다 빠른 유도 미사일
             pulseSpeed: 0.003 + Math.random() * 0.002,
             pulsePhase: Math.random() * Math.PI * 2
           });
+          cluster.satellitesSpawned++;
           cluster.lastSatSpawnTime = timestamp;
         }
       });
