@@ -19,7 +19,8 @@ const TextRainBubble = () => {
     let clusters = []; 
     let freeBubbles = [];
     
-    let fadingOutBubbles = []; 
+    let fadingOutBubbles = [];
+    let detachedBubbles = []; 
     let spawnQueue = []; 
 
     let animationFrameId;
@@ -168,6 +169,23 @@ const TextRainBubble = () => {
           if (cluster.y >= floorY) {
             cluster.landed = true;
             cluster.y = floorY;
+            
+            // 바닥에 닿으면 중심 단어(단어1)만 남기고, 붙어있던 위성(단어2)들을 자연스럽게 분리하여 떨어뜨림
+            const satellites = cluster.circles.filter(c => !c.isCenter);
+            satellites.forEach(c => {
+               detachedBubbles.push({
+                  word: c.word,
+                  color: c.color,
+                  radius: c.radius,
+                  x: cluster.x + c.dx,
+                  y: cluster.y + c.dy,
+                  vy: 0,
+                  pulseSpeed: c.pulseSpeed,
+                  pulsePhase: c.pulsePhase,
+                  fadeIn: c.fadeIn
+               });
+            });
+            cluster.circles = cluster.circles.filter(c => c.isCenter);
           }
         }
 
@@ -253,6 +271,37 @@ const TextRainBubble = () => {
         }
       }
 
+      // 3.5 분리된 단어2들 물리 (자연스럽게 바닥으로 떨어지기)
+      detachedBubbles.forEach(b => {
+         b.vy += 0.1; // 부드러운 중력
+         b.y += b.vy;
+         
+         // 바닥 충돌 (튕기지 않고 그냥 멈춤)
+         if (b.y > height - b.radius) {
+            b.y = height - b.radius;
+            b.vy = 0;
+         }
+      });
+      
+      // 분리된 단어들끼리 겹치지 않게 가볍게 밀어내기 (Relaxation 1 pass)
+      for (let i = 0; i < detachedBubbles.length; i++) {
+        for (let j = i + 1; j < detachedBubbles.length; j++) {
+           const b1 = detachedBubbles[i];
+           const b2 = detachedBubbles[j];
+           const dx = b2.x - b1.x;
+           const dy = b2.y - b1.y;
+           const dist = Math.sqrt(dx*dx + dy*dy) || 0.1;
+           const minDist = b1.radius + b2.radius;
+           if (dist < minDist) {
+              const overlap = (minDist - dist) * 0.5;
+              const nx = (dx/dist) * overlap;
+              const ny = (dy/dist) * overlap;
+              b1.x -= nx; b1.y -= ny;
+              b2.x += nx; b2.y += ny;
+           }
+        }
+      }
+
       // 4. 렌더링
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -326,6 +375,37 @@ const TextRainBubble = () => {
       });
 
 
+      // 4.5 분리된 단어2 렌더링
+      detachedBubbles.forEach(b => {
+        if (b.fadeIn !== undefined && b.fadeIn < 1.0) {
+          b.fadeIn += 0.05;
+          if (b.fadeIn > 1.0) b.fadeIn = 1.0;
+        }
+        const alphaMult = b.fadeIn !== undefined ? b.fadeIn : 1.0;
+        
+        const currentScale = 1.0 + Math.sin(timestamp * b.pulseSpeed + b.pulsePhase) * 0.1;
+        const currentRadius = b.radius * currentScale;
+        
+        ctx.globalAlpha = 0.05 * alphaMult;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.globalAlpha = 0.3 * alphaMult;
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.globalAlpha = 1.0 * alphaMult;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = b.color;
+        ctx.fillStyle = b.color;
+        ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.fillText(b.word, b.x, b.y);
+        ctx.shadowBlur = 0;
+      });
+      
       // 5. 서서히 사라지는 물방울 렌더링
       for (let i = fadingOutBubbles.length - 1; i >= 0; i--) {
         const b = fadingOutBubbles[i];
