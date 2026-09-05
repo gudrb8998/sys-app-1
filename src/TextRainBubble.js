@@ -86,7 +86,7 @@ const TextRainBubble = () => {
               isCenter: true, 
               dx: 0, 
               dy: 0, 
-              radius: 22, 
+              radius: 35, 
               word: item.centerWord,
               color: getRandomColor(),
               pulseSpeed: 0.002,
@@ -97,8 +97,7 @@ const TextRainBubble = () => {
           lastSatSpawnTime: timestamp,
           landed: false,
           speedY: 0.6 + Math.random() * 0.4,
-          driftPhase: Math.random() * Math.PI * 2, // 좌우 흔들림 위상
-          ripples: [] // 합체 시 팝 이펙트를 위한 배열
+          driftPhase: Math.random() * Math.PI * 2
         };
         clusters.push(newCluster);
         clustersSpawned++;
@@ -225,13 +224,6 @@ const TextRainBubble = () => {
             pulsePhase: bubble.pulsePhase
           });
           
-          // Effect 4: 합체 시 Pop(물결) 이펙트 추가
-          target.ripples.push({
-            dx: bubble.x - target.x,
-            dy: bubble.y - target.y,
-            startTime: timestamp
-          });
-          
           freeBubbles.splice(i, 1);
         }
       }
@@ -296,24 +288,9 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 15;
         ctx.shadowColor = center.color;
         ctx.fillStyle = center.color;
-        ctx.font = `bold ${13 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.font = `bold ${20 * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(center.word, cluster.x + center.dx, cluster.y + center.dy);
         ctx.shadowBlur = 0;
-        
-        // Effect 4: 합체 시 물결(Ripple) 이펙트 렌더링
-        cluster.ripples = cluster.ripples.filter(r => timestamp - r.startTime < 400);
-        cluster.ripples.forEach(r => {
-          const progress = (timestamp - r.startTime) / 400; // 0 ~ 1
-          const rx = cluster.x + r.dx;
-          const ry = cluster.y + r.dy;
-          
-          ctx.globalAlpha = 1.0;
-          ctx.beginPath();
-          ctx.arc(rx, ry, 20 + progress * 20, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(255, 255, 255, ${1 - progress})`;
-          ctx.lineWidth = 3 * (1 - progress);
-          ctx.stroke();
-        });
       });
 
       freeBubbles.forEach(bubble => {
