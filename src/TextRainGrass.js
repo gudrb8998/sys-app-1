@@ -63,6 +63,10 @@ const TextRainGrass = () => {
         char: drop.char,
         x: drop.x,
         y: stopY,
+        origX: drop.x,
+        origY: stopY,
+        origW: textWidth,
+        origH: lineHeight,
         color: drop.color,
         hue: drop.color.match(/\d+/)[0],
         w: textWidth,
@@ -75,14 +79,17 @@ const TextRainGrass = () => {
     // 2. 풀숲 실루엣 생성 (토양 위에 얕게)
     let grassBlades = [];
     for (let x = 0; x < width; x += 15) {
-      const soilY = getFloorY(x, 10); // 해당 x 위치의 토양(바닥) 높이
+      const soilY = getFloorY(x, 10);
       grassBlades.push({
         x: x,
-        y: soilY, // 풀이 자라나는 시작점
-        height: 20 + Math.random() * 50, // 얕은 풀 (20~70px)
-        controlX: (Math.random() - 0.5) * 30,
+        y: soilY,
+        origY: soilY,
+        height: 20 + Math.random() * 50,
+        origHeight: 0, // 나중에 설정
       });
     }
+    // Set origHeight
+    grassBlades.forEach(b => b.origHeight = b.height);
 
     const getGrassCatchY = (dropX) => {
       let catchY = height;
@@ -124,7 +131,7 @@ const TextRainGrass = () => {
           return {
             char: item.word,
             color: `hsla(${hue}, 80%, ${lightness}%, ${opacity})`,
-            speed: 1 + Math.random() * 1.5, // 기존(2~4)에서 (1~2.5)로 느리게
+            speed: 1 + Math.random() * 1.5,
           };
         });
 
@@ -164,6 +171,24 @@ const TextRainGrass = () => {
       if (whiteProgress < 1) {
         whiteProgress += 0.003;
         if (whiteProgress > 1) whiteProgress = 1;
+      }
+
+      const baseScale = 1 - (0.5 * whiteProgress); // 1.0 -> 0.5 물리적 스케일
+
+      // 물리적 좌표 업데이트 (토양)
+      for (const sw of stackedWords) {
+        if (sw.isBase) {
+          sw.w = sw.origW * baseScale;
+          sw.h = sw.origH * baseScale;
+          sw.y = height - (height - sw.origY) * baseScale;
+          sw.x = sw.origX + (sw.origW - sw.w) / 2;
+        }
+      }
+
+      // 물리적 좌표 업데이트 (풀숲)
+      for (const blade of grassBlades) {
+        blade.y = height - (height - blade.origY) * baseScale;
+        blade.height = blade.origHeight * baseScale;
       }
 
       // 단계 2: 풀숲 실루엣 등장
@@ -206,16 +231,14 @@ const TextRainGrass = () => {
         ctx.save();
 
         if (sw.isBase) {
-          // 토양(200단어)은 하얀색으로 변하며 서서히 작아짐 (1.0 -> 0.5)
           const lightness = 65 + (35 * whiteProgress);
           const saturation = 80 - (80 * whiteProgress);
           ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
           
-          const currentScale = 1 - (0.5 * whiteProgress);
-          // 단어 중앙 하단을 기준으로 축소
-          ctx.translate(sw.x + sw.w / 2, sw.y + sw.h);
-          ctx.scale(currentScale, currentScale);
-          ctx.fillText(sw.char, -sw.w / 2, -sw.h);
+          // 이미 물리적 좌표(x,y)가 계산되었으므로, 해당 위치에서 스케일만 적용
+          ctx.translate(sw.x, sw.y);
+          ctx.scale(baseScale, baseScale);
+          ctx.fillText(sw.char, 0, 0);
         } else {
           // 싹(ngram 데이터)은 할당받은 본래 색상 사용
           ctx.fillStyle = sw.color;

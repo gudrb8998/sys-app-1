@@ -63,6 +63,10 @@ const TextRainGrassLine = () => {
         char: drop.char,
         x: drop.x,
         y: stopY,
+        origX: drop.x,
+        origY: stopY,
+        origW: textWidth,
+        origH: lineHeight,
         color: drop.color,
         hue: drop.color.match(/\d+/)[0],
         w: textWidth,
@@ -81,10 +85,12 @@ const TextRainGrassLine = () => {
       grassBlades.push({
         x: x,
         y: soilY,
+        origY: soilY,
         height: 20 + Math.random() * 50,
-        controlX: (Math.random() - 0.5) * 30,
+        origHeight: 0,
       });
     }
+    grassBlades.forEach(b => b.origHeight = b.height);
 
     const getGrassCatchY = (dropX) => {
       let catchY = height;
@@ -168,6 +174,22 @@ const TextRainGrassLine = () => {
         if (whiteProgress > 1) whiteProgress = 1;
       }
 
+      const baseScale = 1 - (0.5 * whiteProgress);
+
+      for (const sw of stackedWords) {
+        if (sw.isBase) {
+          sw.w = sw.origW * baseScale;
+          sw.h = sw.origH * baseScale;
+          sw.y = height - (height - sw.origY) * baseScale;
+          sw.x = sw.origX + (sw.origW - sw.w) / 2;
+        }
+      }
+
+      for (const blade of grassBlades) {
+        blade.y = height - (height - blade.origY) * baseScale;
+        blade.height = blade.origHeight * baseScale;
+      }
+
       // 단계 2: 풀숲 실루엣 등장
       if (whiteProgress >= 1 && grassProgress < 1) {
         grassProgress += 0.005;
@@ -206,16 +228,13 @@ const TextRainGrassLine = () => {
         ctx.save();
 
         if (sw.isBase) {
-          // 토양(200단어)은 하얀색으로 변하며 서서히 작아짐 (1.0 -> 0.5)
           const lightness = 65 + (35 * whiteProgress);
           const saturation = 80 - (80 * whiteProgress);
           ctx.fillStyle = `hsl(${sw.hue}, ${saturation}%, ${lightness}%)`;
 
-          const currentScale = 1 - (0.5 * whiteProgress);
-          // 단어 중앙 하단을 기준으로 축소
-          ctx.translate(sw.x + sw.w / 2, sw.y + sw.h);
-          ctx.scale(currentScale, currentScale);
-          ctx.fillText(sw.char, -sw.w / 2, -sw.h);
+          ctx.translate(sw.x, sw.y);
+          ctx.scale(baseScale, baseScale);
+          ctx.fillText(sw.char, 0, 0);
         } else {
           // 싹(ngram 데이터)은 스케일 변환 없이 출력
           ctx.fillStyle = sw.color;
