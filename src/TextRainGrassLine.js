@@ -78,7 +78,7 @@ const TextRainGrassLine = () => {
       });
     }
 
-    // 2. 풀숲 실루엣 생성 (토양 위에 얕게)
+    // 2. 풀숲 실루엣 생성 (토양 위에 조금 더 길게)
     let grassBlades = [];
     for (let x = 0; x < width; x += 15) {
       const soilY = getFloorY(x, 10);
@@ -86,8 +86,9 @@ const TextRainGrassLine = () => {
         x: x,
         y: soilY,
         origY: soilY,
-        height: 20 + Math.random() * 50,
+        height: 60 + Math.random() * 100, // (60~160)
         origHeight: 0,
+        controlX: (Math.random() - 0.5) * 40,
       });
     }
     grassBlades.forEach(b => b.origHeight = b.height);
