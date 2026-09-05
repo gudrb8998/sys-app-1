@@ -155,6 +155,12 @@ const TextRainGrass = () => {
 
     const spawnRain = () => {
       if (isResetting) return; // 리셋 중에는 새로 생성하지 않음
+      
+      // 큐에 있는 모든 단어를 다 썼을 경우에만 다시 처음부터 채우기
+      if (sproutQueue.length === 0 && isDataLoaded) {
+        rebuildQueue();
+      }
+
       if (sproutQueue.length > 0 && fallingDrops.length < 100) {
         const item = sproutQueue.shift();
         const baseTextWidth = ctx.measureText(item.char).width;
@@ -211,7 +217,7 @@ const TextRainGrass = () => {
           stackedWords = stackedWords.filter(sw => sw.isBase || top5.includes(sw.char));
           fallingDrops = [];
           
-          rebuildQueue();
+          // rebuildQueue(); // 여기서 큐를 초기화하지 않음. 이전에 안떨어졌던 다음 단어가 이어서 떨어짐.
           isResetting = false;
           fadeProgress = 0;
         }
