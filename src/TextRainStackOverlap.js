@@ -150,12 +150,8 @@ const TextRainStackOverlap = () => {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
 
-        ctx.shadowColor = drop.color;
-        ctx.shadowBlur = 10;
-
         ctx.fillText(drop.char, drop.x, drop.y);
 
-        ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
       }
 
