@@ -203,10 +203,6 @@ const TextRainBubble = () => {
         const bubble = freeBubbles[i];
         const target = bubble.targetCluster;
 
-        // 단순히 중심이 아니라 사방(targetAngle)을 향해 날아가도록 목표점 계산
-        const aimDist = target.circles[0].radius + 20; 
-        const aimX = target.x + Math.cos(bubble.targetAngle) * aimDist;
-        const aimY = target.y + Math.sin(bubble.targetAngle) * aimDist;
 
         
         if (target.burst || target.circles.length === 0) {
@@ -225,8 +221,9 @@ const TextRainBubble = () => {
           freeBubbles.splice(i, 1);
           continue;
         }
-const dx = aimX - bubble.x;
-        const dy = aimY - bubble.y;
+        
+        const dx = target.x - bubble.x;
+        const dy = target.y - bubble.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist > 0) {
@@ -247,13 +244,17 @@ const dx = aimX - bubble.x;
         }
 
         if (hit) {
+          // 닿는 순간, 단어1(중심) 주변의 임의의 각도로 순간이동하여 부착 (이후 물리엔진이 빈자리로 쑤셔넣음)
+          const attachAngle = Math.random() * Math.PI * 2;
+          const attachDist = target.circles[0].radius + bubble.radius;
+          
           target.circles.push({
             isCenter: false,
             word: bubble.word,
             color: bubble.color,
             radius: bubble.radius,
-            dx: bubble.x - target.x,
-            dy: bubble.y - target.y,
+            dx: Math.cos(attachAngle) * attachDist,
+            dy: Math.sin(attachAngle) * attachDist,
             pulseSpeed: bubble.pulseSpeed,
             pulsePhase: bubble.pulsePhase
           });
