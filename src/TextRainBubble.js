@@ -64,6 +64,10 @@ const TextRainBubble = () => {
         }));
       });
 
+    // 설정값 로드
+    const savedLaneCount = parseInt(localStorage.getItem('bubbleLaneCount'), 10) || 3;
+    const spawnInterval = parseInt(localStorage.getItem('bubbleSpawnInterval'), 10) || 5000;
+
     let lastClusterSpawnTime = 0;
     let clustersSpawned = 0;
 
@@ -99,15 +103,15 @@ const TextRainBubble = () => {
         detachedBubbles.length = 0;
         freeBubbles.length = 0;
         fadingOutBubbles.length = 0;
-        clustersSpawned = 0;
-        lastClusterSpawnTime = timestamp;
+        // 즉시 첫 단어1이 등장하도록 설정값만큼 대기 차감
+        lastClusterSpawnTime = timestamp - spawnInterval;
       }
 
-      if (timestamp - lastClusterSpawnTime > 5000 && spawnQueue.length > 0) {
+      if (timestamp - lastClusterSpawnTime > spawnInterval && spawnQueue.length > 0) {
         const item = spawnQueue.shift();
         
-        const lane = clustersSpawned % 3;
-        const laneWidth = width / 3;
+        const lane = clustersSpawned % savedLaneCount;
+        const laneWidth = width / savedLaneCount;
         const startX = laneWidth * lane + laneWidth / 2 + (Math.random() - 0.5) * (laneWidth * 0.5);
 
         const newCluster = {
