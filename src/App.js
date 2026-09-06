@@ -16,6 +16,7 @@ import TextRainGrassLine from "./TextRainGrassLine";
 import QuizPage from "./pages/QuizPage";
 import DisplayPage from "./pages/DisplayPage";
 import ClearPage from "./pages/ClearPage";
+import BubbleSettingsPage from "./pages/BubbleSettingsPage";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/text-rain-grass-line" element={<TextRainGrassLine />} />
         <Route path="/text-rain-tree" element={<TextRainTree />} />
         <Route path="/text-rain-bubble" element={<TextRainBubble />} />
+        <Route path="/settings-bubble" element={<BubbleSettingsPage />} />
         <Route path="/quiz" element={<QuizPage />} />
         <Route path="/display" element={<DisplayPage />} />
         <Route path="/clear" element={<ClearPage />} />
