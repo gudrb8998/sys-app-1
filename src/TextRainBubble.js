@@ -65,8 +65,8 @@ const TextRainBubble = () => {
       });
 
     // 설정값 로드
-    const savedLaneCount = parseInt(localStorage.getItem('bubbleLaneCount'), 10) || 3;
-    const spawnInterval = parseInt(localStorage.getItem('bubbleSpawnInterval'), 10) || 5000;
+    const savedLaneCount = parseInt(localStorage.getItem('bubbleLaneCount'), 10) || 2;
+    const spawnInterval = parseInt(localStorage.getItem('bubbleSpawnInterval'), 10) || 10000;
 
     let lastClusterSpawnTime = 0;
     let clustersSpawned = 0;

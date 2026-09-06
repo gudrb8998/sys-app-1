@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 const BubbleSettingsPage = () => {
   const navigate = useNavigate();
-  const [laneCount, setLaneCount] = useState(3);
-  const [spawnInterval, setSpawnInterval] = useState(5000);
+  const [laneCount, setLaneCount] = useState(2);
+  const [spawnInterval, setSpawnInterval] = useState(10000);
 
   useEffect(() => {
     const savedLaneCount = localStorage.getItem('bubbleLaneCount');
@@ -37,7 +37,7 @@ const BubbleSettingsPage = () => {
             onChange={(e) => setLaneCount(parseInt(e.target.value, 10))}
             style={styles.slider}
           />
-          <p style={styles.hint}>단어1이 떨어지는 가로 위치의 개수입니다. (기본: 3)</p>
+          <p style={styles.hint}>단어1이 떨어지는 가로 위치의 개수입니다. (기본: 2)</p>
         </div>
 
         <div style={styles.formGroup}>
@@ -47,13 +47,13 @@ const BubbleSettingsPage = () => {
           <input 
             type="range" 
             min="500" 
-            max="10000" 
+            max="60000" 
             step="500"
             value={spawnInterval} 
             onChange={(e) => setSpawnInterval(parseInt(e.target.value, 10))}
             style={styles.slider}
           />
-          <p style={styles.hint}>단어1이 새로 등장하는 간격입니다. (기본: 5.0초)</p>
+          <p style={styles.hint}>단어1이 새로 등장하는 간격입니다. (최대 60초, 기본: 10.0초)</p>
         </div>
 
         <button style={styles.button} onClick={handleSave}>
