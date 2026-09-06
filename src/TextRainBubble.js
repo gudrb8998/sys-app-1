@@ -70,6 +70,7 @@ const TextRainBubble = () => {
 
     let lastClusterSpawnTime = 0;
     let clustersSpawned = 0;
+    let allDoneFrames = 0; // 재시작 전 대기 프레임 카운터
 
     const handleResize = () => {
       width = window.innerWidth;
@@ -80,6 +81,7 @@ const TextRainBubble = () => {
     window.addEventListener('resize', handleResize);
     
     const render = (timestamp) => {
+      ctx.shadowBlur = 0; // 프레임 시작 시 그림자 초기화 (번쩍임 릭 방지)
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
 
@@ -89,12 +91,20 @@ const TextRainBubble = () => {
       const allDone =
         spawnQueue.length === 0 &&
         originalQueue.length > 0 &&
+        clusters.length > 0 &&
         clusters.every(c => c.landed) &&
         freeBubbles.length === 0 &&
         fadingOutBubbles.length === 0 &&
         detachedBubbles.every(b => b.y >= height - b.radius - 5);
 
       if (allDone) {
+        allDoneFrames++;
+      } else {
+        allDoneFrames = 0;
+      }
+
+      // 바닥에 모든 단어가 안착한 후 약 3초(180프레임) 유지 후 재시작
+      if (allDoneFrames > 180) {
         spawnQueue = originalQueue.map(item => ({
           centerWord: item.centerWord,
           satellites: item.satellites.map(s => ({ ...s }))
@@ -103,6 +113,8 @@ const TextRainBubble = () => {
         detachedBubbles.length = 0;
         freeBubbles.length = 0;
         fadingOutBubbles.length = 0;
+        clustersSpawned = 0;
+        allDoneFrames = 0;
         // 즉시 첫 단어1이 등장하도록 설정값만큼 대기 차감
         lastClusterSpawnTime = timestamp - spawnInterval;
       }
@@ -178,58 +190,19 @@ const TextRainBubble = () => {
         if (!cluster.landed) {
           cluster.y += cluster.speedY;
           cluster.x += Math.sin(timestamp * 0.001 + cluster.driftPhase) * 0.3;
-          
-          // 바닥 충돌 체크 - Math.max spread 대신 루프로 최적화 (GC 부담 감소)
-          let myBottomExt = 0;
-          for (let ci = 0; ci < cluster.circles.length; ci++) {
-            const val = cluster.circles[ci].dy + cluster.circles[ci].radius;
-            if (val > myBottomExt) myBottomExt = val;
-          }
-          const floorY = height - 10 - myBottomExt;
-          
-          if (cluster.y >= floorY) {
-            if (!cluster.shedSatellites) {
-              // 처음 닿는 순간: 위성들을 분리하고 단어1도 detachedBubble로 전환
-              cluster.shedSatellites = true;
-              const satellites = cluster.circles.filter(c => !c.isCenter);
-              const center = cluster.circles.find(c => c.isCenter);
+        }
 
-              // 위성들을 detachedBubble로 전환
-              satellites.forEach(c => {
-                detachedBubbles.push({
-                  word: c.word,
-                  color: c.color,
-                  radius: c.radius,
-                  x: cluster.x + c.dx,
-                  y: cluster.y + c.dy,
-                  vy: 0,
-                  pulseSpeed: c.pulseSpeed,
-                  pulsePhase: c.pulsePhase,
-                  fadeIn: c.fadeIn
-                });
-              });
-
-              // 단어1도 자연스럽게 떨어지도록 detachedBubble로 전환
-              if (center) {
-                detachedBubbles.push({
-                  word: center.word,
-                  color: center.color,
-                  radius: center.radius,
-                  x: cluster.x,
-                  y: cluster.y,
-                  vy: cluster.speedY, // 현재 낙하 속도 그대로 이어받음
-                  pulseSpeed: center.pulseSpeed,
-                  pulsePhase: center.pulsePhase,
-                  fadeIn: 1,
-                  isCenter: true,   // 단어1 구분 플래그 (렌더링 크기 구분용)
-                });
-              }
-
-              // 군집 제거
-              cluster.landed = true;
-              cluster.circles = [];
-            }
-          }
+        // 바닥 충돌 체크 (landed 여부와 무관하게 바닥 뚫림 방지)
+        let myBottomExt = 0;
+        for (let ci = 0; ci < cluster.circles.length; ci++) {
+          const val = cluster.circles[ci].dy + cluster.circles[ci].radius;
+          if (val > myBottomExt) myBottomExt = val;
+        }
+        const floorY = height - 10 - myBottomExt;
+        
+        if (cluster.y >= floorY) {
+          cluster.y = floorY; // 더 이상 떨어지지 않고 고정 (바닥을 뚫는 경우 위로 밀어올림)
+          cluster.landed = true;
         }
 
         
