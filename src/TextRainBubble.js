@@ -74,7 +74,7 @@ const TextRainBubble = () => {
       ctx.fillRect(0, 0, width, height);
 
       // 1. 군집 생성
-      if (timestamp - lastClusterSpawnTime > 4000 && spawnQueue.length > 0) {
+      if (timestamp - lastClusterSpawnTime > 5000 && spawnQueue.length > 0) {
         const item = spawnQueue.shift();
         
         const lane = clustersSpawned % 3;
