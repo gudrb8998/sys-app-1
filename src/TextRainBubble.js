@@ -75,7 +75,14 @@ const TextRainBubble = () => {
     };
     window.addEventListener('resize', handleResize);
     
+    let lastDrawTime = 0;
     const render = (timestamp) => {
+      if (timestamp - lastDrawTime < 33) { // ~30fps 제한
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+      lastDrawTime = timestamp;
+
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
 
@@ -141,8 +148,8 @@ const TextRainBubble = () => {
         
 
 
-        // 물리 엔진 (Circle Packing Relaxation)
-        for (let iter = 0; iter < 6; iter++) {
+        // 물리 엔진 (Circle Packing Relaxation) - 3회로 최적화
+        for (let iter = 0; iter < 3; iter++) {
           for (let i = 0; i < cluster.circles.length; i++) {
             for (let j = i + 1; j < cluster.circles.length; j++) {
               const c1 = cluster.circles[i];
@@ -150,7 +157,7 @@ const TextRainBubble = () => {
               const dx = c2.dx - c1.dx;
               const dy = c2.dy - c1.dy;
               const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
-              const minDist = c1.radius + c2.radius + 1.0; // 1px 여백
+              const minDist = c1.radius + c2.radius + 1.0;
               
               if (dist < minDist) {
                 const pushDist = (minDist - dist) * 0.5;
@@ -172,11 +179,14 @@ const TextRainBubble = () => {
 
         if (!cluster.landed) {
           cluster.y += cluster.speedY;
-          // Effect 2: 좌우 흔들림 (Drift)
           cluster.x += Math.sin(timestamp * 0.001 + cluster.driftPhase) * 0.3;
           
-          // 바닥 충돌 체크
-          const myBottomExt = cluster.circles.length > 0 ? Math.max(...cluster.circles.map(c => c.dy + c.radius)) : 0;
+          // 바닥 충돌 체크 - Math.max spread 대신 루프로 최적화 (GC 부담 감소)
+          let myBottomExt = 0;
+          for (let ci = 0; ci < cluster.circles.length; ci++) {
+            const val = cluster.circles[ci].dy + cluster.circles[ci].radius;
+            if (val > myBottomExt) myBottomExt = val;
+          }
           const floorY = height - 10 - myBottomExt;
           
           if (cluster.y >= floorY) {
@@ -228,6 +238,9 @@ const TextRainBubble = () => {
 
         // 대기 중인 연결어 스폰 (화면 상단에서 비처럼 떨어지도록 변경)
         if (cluster.pendingSatellites.length > 0 && timestamp - cluster.lastSatSpawnTime > 50) {
+          // freeBubbles 최대 60개 상한 - 초과 시 spawn 대기
+          if (freeBubbles.length >= 60) return;
+
           const satItem = cluster.pendingSatellites.shift();
           
           freeBubbles.push({
@@ -414,12 +427,9 @@ const TextRainBubble = () => {
 
           // Text
           ctx.globalAlpha = 1.0 * alphaMult;
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = c.color;
           ctx.fillStyle = c.color;
           ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
           ctx.fillText(c.word, sx, sy);
-          ctx.shadowBlur = 0;
         });
 
         // 중심 단어 렌더링
@@ -475,8 +485,12 @@ const TextRainBubble = () => {
         ctx.stroke();
 
         ctx.globalAlpha = 1.0 * alphaMult;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = b.color;
+        if (b.isCenter) {
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = b.color;
+        } else {
+          ctx.shadowBlur = 0;
+        }
         ctx.fillStyle = b.color;
         // 단어1(isCenter)은 큰 폰트, 단어2는 작은 폰트
         const fontSize = b.isCenter ? 28 : 9;
@@ -509,12 +523,9 @@ const TextRainBubble = () => {
         ctx.stroke();
 
         ctx.globalAlpha = 1.0 * b.opacity;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = b.color;
         ctx.fillStyle = b.color;
         ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(b.word, b.x, b.y);
-        ctx.shadowBlur = 0;
       }
       freeBubbles.forEach(bubble => {
         const currentScale = 1.0 + Math.sin(timestamp * bubble.pulseSpeed + bubble.pulsePhase) * 0.1;
@@ -535,12 +546,9 @@ const TextRainBubble = () => {
 
         // Text
         ctx.globalAlpha = 1.0;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = bubble.color;
         ctx.fillStyle = bubble.color;
         ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(bubble.word, bubble.x, bubble.y);
-        ctx.shadowBlur = 0;
       });
 
 
