@@ -355,17 +355,18 @@ const TextRainBubble = () => {
             pulsePhase: bubble.pulsePhase
           });
 
-          // 목표 빈자리로 순간이동하되 투명하게(fadeIn=0) 추가하여 서서히 나타나도록 설정
-          const attachAngle = Math.random() * Math.PI * 2;
-          const attachDist = centerCircle.radius + bubble.radius;
+          // 무작위 순간이동으로 인한 겹침(하이라이트 버그) 방지
+          // 닿은 위치 그대로 군집에 편입되도록 계산
+          const hitDx = bubble.x - target.x;
+          const hitDy = bubble.y - target.y;
           
           target.circles.push({
             isCenter: false,
             word: bubble.word,
             color: bubble.color,
             radius: bubble.radius,
-            dx: Math.cos(attachAngle) * attachDist,
-            dy: Math.sin(attachAngle) * attachDist,
+            dx: hitDx,
+            dy: hitDy,
             fadeIn: 0.0,
             pulseSpeed: bubble.pulseSpeed,
             pulsePhase: bubble.pulsePhase
