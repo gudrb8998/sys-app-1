@@ -21,7 +21,8 @@ const TextRainBubble = () => {
     
     let fadingOutBubbles = [];
     let detachedBubbles = []; 
-    let spawnQueue = []; 
+    let spawnQueue = [];
+    let originalQueue = []; // 재시작용 원본 데이터 보관
 
     let animationFrameId;
 
@@ -56,6 +57,11 @@ const TextRainBubble = () => {
             satellites: topSatellites
           });
         });
+        // 재시작을 위해 원본 데이터 보관
+        originalQueue = sortedW1.map(w1 => ({
+          centerWord: w1,
+          satellites: [...data[w1]]
+        }));
       });
 
     let lastClusterSpawnTime = 0;
@@ -74,11 +80,33 @@ const TextRainBubble = () => {
       ctx.fillRect(0, 0, width, height);
 
       // 1. 군집 생성
-      if (timestamp - lastClusterSpawnTime > 2000 && spawnQueue.length > 0) {
+      // 모든 군집이 처리 완료되고 spawnQueue가 비었으면 재시작
+      const allDone =
+        spawnQueue.length === 0 &&
+        originalQueue.length > 0 &&
+        clusters.every(c => c.landed) &&
+        freeBubbles.length === 0 &&
+        fadingOutBubbles.length === 0 &&
+        detachedBubbles.every(b => b.y >= height - b.radius - 5);
+
+      if (allDone) {
+        spawnQueue = originalQueue.map(item => ({
+          centerWord: item.centerWord,
+          satellites: item.satellites.map(s => ({ ...s }))
+        }));
+        clusters.length = 0;
+        detachedBubbles.length = 0;
+        freeBubbles.length = 0;
+        fadingOutBubbles.length = 0;
+        clustersSpawned = 0;
+        lastClusterSpawnTime = timestamp;
+      }
+
+      if (timestamp - lastClusterSpawnTime > 5000 && spawnQueue.length > 0) {
         const item = spawnQueue.shift();
         
-        const lane = clustersSpawned % 4;
-        const laneWidth = width / 4;
+        const lane = clustersSpawned % 3;
+        const laneWidth = width / 3;
         const startX = laneWidth * lane + laneWidth / 2 + (Math.random() - 0.5) * (laneWidth * 0.5);
 
         const newCluster = {
@@ -89,7 +117,7 @@ const TextRainBubble = () => {
               isCenter: true, 
               dx: 0, 
               dy: 0, 
-              radius: 35, 
+              radius: 55, 
               word: item.centerWord,
               color: getRandomColor(),
               pulseSpeed: 0.002,
@@ -153,9 +181,12 @@ const TextRainBubble = () => {
           
           if (cluster.y >= floorY) {
             if (!cluster.shedSatellites) {
-              // 처음 닿는 순간: 위성들을 분리하고 단어1만 남김 (아직 landed 처리 안함 - 계속 낙하)
+              // 처음 닿는 순간: 위성들을 분리하고 단어1도 detachedBubble로 전환
               cluster.shedSatellites = true;
               const satellites = cluster.circles.filter(c => !c.isCenter);
+              const center = cluster.circles.find(c => c.isCenter);
+
+              // 위성들을 detachedBubble로 전환
               satellites.forEach(c => {
                 detachedBubbles.push({
                   word: c.word,
@@ -169,14 +200,26 @@ const TextRainBubble = () => {
                   fadeIn: c.fadeIn
                 });
               });
-              cluster.circles = cluster.circles.filter(c => c.isCenter);
-              // 위성 해체 후 floorY를 단어1 기준으로 재계산해서 즉시 올바른 위치로 이동
-              const centerRadius = cluster.circles.length > 0 ? cluster.circles[0].radius : 0;
-              cluster.y = height - 10 - centerRadius;
-            } else {
-              // 이미 위성이 분리된 상태 - 단어1이 최종 바닥에 안착
+
+              // 단어1도 자연스럽게 떨어지도록 detachedBubble로 전환
+              if (center) {
+                detachedBubbles.push({
+                  word: center.word,
+                  color: center.color,
+                  radius: center.radius,
+                  x: cluster.x,
+                  y: cluster.y,
+                  vy: cluster.speedY, // 현재 낙하 속도 그대로 이어받음
+                  pulseSpeed: center.pulseSpeed,
+                  pulsePhase: center.pulsePhase,
+                  fadeIn: 1,
+                  isCenter: true,   // 단어1 구분 플래그 (렌더링 크기 구분용)
+                });
+              }
+
+              // 군집 제거
               cluster.landed = true;
-              cluster.y = floorY;
+              cluster.circles = [];
             }
           }
         }
@@ -208,6 +251,29 @@ const TextRainBubble = () => {
       for (let i = freeBubbles.length - 1; i >= 0; i--) {
         const bubble = freeBubbles[i];
         const target = bubble.targetCluster;
+
+        // target 군집이 이미 해체(circles 비어있음)된 경우 즉시 detachedBubble로 전환
+        if (target.shedSatellites && target.circles.length === 0) {
+          detachedBubbles.push({
+            word: bubble.word,
+            color: bubble.color,
+            radius: bubble.radius,
+            x: bubble.x,
+            y: bubble.y,
+            vy: 0,
+            pulseSpeed: bubble.pulseSpeed,
+            pulsePhase: bubble.pulsePhase,
+            fadeIn: 1.0
+          });
+          freeBubbles.splice(i, 1);
+          continue;
+        }
+
+        // 화면 밖으로 벗어난 freeBubble 제거
+        if (bubble.y > height + 100) {
+          freeBubbles.splice(i, 1);
+          continue;
+        }
 
         const dx = target.x - bubble.x;
         const dy = target.y - bubble.y;
@@ -249,6 +315,24 @@ const TextRainBubble = () => {
           }
 
           // 닿는 순간 그 자리에서 서서히 사라지도록 fadingOutBubbles에 추가
+          // center circle이 없으면(cluster 해체된 경우) detachedBubble로 즉시 전환
+          const centerCircle = target.circles.find(c => c.isCenter);
+          if (!centerCircle) {
+            detachedBubbles.push({
+              word: bubble.word,
+              color: bubble.color,
+              radius: bubble.radius,
+              x: bubble.x,
+              y: bubble.y,
+              vy: 0,
+              pulseSpeed: bubble.pulseSpeed,
+              pulsePhase: bubble.pulsePhase,
+              fadeIn: 1.0
+            });
+            freeBubbles.splice(i, 1);
+            continue;
+          }
+
           fadingOutBubbles.push({
             word: bubble.word,
             color: bubble.color,
@@ -262,7 +346,7 @@ const TextRainBubble = () => {
 
           // 목표 빈자리로 순간이동하되 투명하게(fadeIn=0) 추가하여 서서히 나타나도록 설정
           const attachAngle = Math.random() * Math.PI * 2;
-          const attachDist = target.circles[0].radius + bubble.radius;
+          const attachDist = centerCircle.radius + bubble.radius;
           
           target.circles.push({
             isCenter: false,
@@ -339,7 +423,8 @@ const TextRainBubble = () => {
         });
 
         // 중심 단어 렌더링
-        const center = cluster.circles[0];
+        const center = cluster.circles.find(c => c.isCenter);
+        if (!center) return; // circles가 비어있으면 렌더링 skip
         const currentScale = 1.0 + Math.sin(timestamp * center.pulseSpeed + center.pulsePhase) * 0.05;
         const currentRadius = center.radius * currentScale;
         
@@ -361,7 +446,7 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 15;
         ctx.shadowColor = center.color;
         ctx.fillStyle = center.color;
-        ctx.font = `bold ${20 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.font = `bold ${28 * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(center.word, cluster.x + center.dx, cluster.y + center.dy);
         ctx.shadowBlur = 0;
       });
@@ -393,7 +478,9 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 10;
         ctx.shadowColor = b.color;
         ctx.fillStyle = b.color;
-        ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
+        // 단어1(isCenter)은 큰 폰트, 단어2는 작은 폰트
+        const fontSize = b.isCenter ? 28 : 9;
+        ctx.font = `${fontSize * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(b.word, b.x, b.y);
         ctx.shadowBlur = 0;
       });

@@ -79,12 +79,12 @@ export const QUESTIONS = [
   },
   {
     id: 5,
-    text: 'SNS가 비평에 가져온 가장 흥미로운 변화는 무엇이라고 생각하나요?',
+    text: '하나의 공연을 여러 사람과 함께 다시 들여다본다면, 무엇을 가장 해보고 싶나요?',
     options: [
-      { label: 'A', text: '글, 사진, 영상이 결합된 새로운 비평 콘텐츠가 만들어지는 것', type: 'create' },
-      { label: 'B', text: '공연에 대한 반응과 정보가 빠르게 기록되는 것', type: 'archive' },
-      { label: 'C', text: '작품을 바라보는 다양한 관점과 해석이 등장하는 것', type: 'interpret' },
-      { label: 'D', text: '관객, 무용가, 비평가가 직접 반응하고 대화하는 것', type: 'connect' },
+      { label: 'A', text: '공연에서 받은 영감으로 새로운 콘텐츠를 만든다.', type: 'create' },
+      { label: 'B', text: '공연의 장면과 정보를 모아 구체적으로 기록한다.', type: 'archive' },
+      { label: 'C', text: '작품에 담긴 의미를 다양한 관점에서 생각해본다.', type: 'interpret' },
+      { label: 'D', text: '공연을 본 사람들의 생각과 반응을 나누는 시간을 갖는다.', type: 'connect' },
     ],
   },
   {
