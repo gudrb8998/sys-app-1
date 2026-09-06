@@ -75,16 +75,10 @@ const TextRainBubble = () => {
     };
     window.addEventListener('resize', handleResize);
     
-    let lastDrawTime = 0;
     const render = (timestamp) => {
-      if (timestamp - lastDrawTime < 33) { // ~30fps 제한
-        animationFrameId = requestAnimationFrame(render);
-        return;
-      }
-      lastDrawTime = timestamp;
-
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
+
 
       // 1. 군집 생성
       // 모든 군집이 처리 완료되고 spawnQueue가 비었으면 재시작
