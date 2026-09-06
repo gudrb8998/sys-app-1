@@ -77,8 +77,8 @@ const TextRainBubble = () => {
       if (timestamp - lastClusterSpawnTime > 2000 && spawnQueue.length > 0) {
         const item = spawnQueue.shift();
         
-        const lane = clustersSpawned % 4;
-        const laneWidth = width / 4;
+        const lane = clustersSpawned % 3;
+        const laneWidth = width / 3;
         const startX = laneWidth * lane + laneWidth / 2 + (Math.random() - 0.5) * (laneWidth * 0.5);
 
         const newCluster = {
