@@ -21,7 +21,8 @@ const TextRainBubble = () => {
     
     let fadingOutBubbles = [];
     let detachedBubbles = []; 
-    let spawnQueue = []; 
+    let spawnQueue = [];
+    let originalQueue = []; // 재시작용 원본 데이터 보관
 
     let animationFrameId;
 
@@ -56,6 +57,11 @@ const TextRainBubble = () => {
             satellites: topSatellites
           });
         });
+        // 재시작을 위해 원본 데이터 보관
+        originalQueue = sortedW1.map(w1 => ({
+          centerWord: w1,
+          satellites: [...data[w1]]
+        }));
       });
 
     let lastClusterSpawnTime = 0;
@@ -74,6 +80,28 @@ const TextRainBubble = () => {
       ctx.fillRect(0, 0, width, height);
 
       // 1. 군집 생성
+      // 모든 군집이 처리 완료되고 spawnQueue가 비었으면 재시작
+      const allDone =
+        spawnQueue.length === 0 &&
+        originalQueue.length > 0 &&
+        clusters.every(c => c.landed) &&
+        freeBubbles.length === 0 &&
+        fadingOutBubbles.length === 0 &&
+        detachedBubbles.every(b => b.y >= height - b.radius - 5);
+
+      if (allDone) {
+        spawnQueue = originalQueue.map(item => ({
+          centerWord: item.centerWord,
+          satellites: item.satellites.map(s => ({ ...s }))
+        }));
+        clusters.length = 0;
+        detachedBubbles.length = 0;
+        freeBubbles.length = 0;
+        fadingOutBubbles.length = 0;
+        clustersSpawned = 0;
+        lastClusterSpawnTime = timestamp;
+      }
+
       if (timestamp - lastClusterSpawnTime > 5000 && spawnQueue.length > 0) {
         const item = spawnQueue.shift();
         
