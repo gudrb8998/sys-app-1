@@ -153,9 +153,12 @@ const TextRainBubble = () => {
           
           if (cluster.y >= floorY) {
             if (!cluster.shedSatellites) {
-              // 처음 닿는 순간: 위성들을 분리하고 단어1만 남김 (아직 landed 처리 안함 - 계속 낙하)
+              // 처음 닿는 순간: 위성들을 분리하고 단어1도 detachedBubble로 전환
               cluster.shedSatellites = true;
               const satellites = cluster.circles.filter(c => !c.isCenter);
+              const center = cluster.circles.find(c => c.isCenter);
+
+              // 위성들을 detachedBubble로 전환
               satellites.forEach(c => {
                 detachedBubbles.push({
                   word: c.word,
@@ -169,14 +172,26 @@ const TextRainBubble = () => {
                   fadeIn: c.fadeIn
                 });
               });
-              cluster.circles = cluster.circles.filter(c => c.isCenter);
-              // 위성 해체 후 floorY를 단어1 기준으로 재계산해서 즉시 올바른 위치로 이동
-              const centerRadius = cluster.circles.length > 0 ? cluster.circles[0].radius : 0;
-              cluster.y = height - 10 - centerRadius;
-            } else {
-              // 이미 위성이 분리된 상태 - 단어1이 최종 바닥에 안착
+
+              // 단어1도 자연스럽게 떨어지도록 detachedBubble로 전환
+              if (center) {
+                detachedBubbles.push({
+                  word: center.word,
+                  color: center.color,
+                  radius: center.radius,
+                  x: cluster.x,
+                  y: cluster.y,
+                  vy: cluster.speedY, // 현재 낙하 속도 그대로 이어받음
+                  pulseSpeed: center.pulseSpeed,
+                  pulsePhase: center.pulsePhase,
+                  fadeIn: 1,
+                  isCenter: true,   // 단어1 구분 플래그 (렌더링 크기 구분용)
+                });
+              }
+
+              // 군집 제거
               cluster.landed = true;
-              cluster.y = floorY;
+              cluster.circles = [];
             }
           }
         }
@@ -393,7 +408,9 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 10;
         ctx.shadowColor = b.color;
         ctx.fillStyle = b.color;
-        ctx.font = `${9 * currentScale}px "Malgun Gothic", sans-serif`;
+        // 단어1(isCenter)은 큰 폰트, 단어2는 작은 폰트
+        const fontSize = b.isCenter ? 20 : 9;
+        ctx.font = `${fontSize * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(b.word, b.x, b.y);
         ctx.shadowBlur = 0;
       });
