@@ -80,7 +80,6 @@ const TextRainBubble = () => {
     window.addEventListener('resize', handleResize);
     
     const render = (timestamp) => {
-      ctx.shadowBlur = 0; // 프레임 시작 시 그림자 초기화 (번쩍임 릭 방지)
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, width, height);
 
@@ -356,8 +355,8 @@ const TextRainBubble = () => {
             pulsePhase: bubble.pulsePhase
           });
 
-          // 충돌한 방향 그대로(순간이동 없이) 부드럽게 붙도록 각도 계산
-          const attachAngle = Math.atan2(bubble.y - target.y, bubble.x - target.x);
+          // 목표 빈자리로 순간이동하되 투명하게(fadeIn=0) 추가하여 서서히 나타나도록 설정
+          const attachAngle = Math.random() * Math.PI * 2;
           const attachDist = centerCircle.radius + bubble.radius;
           
           target.circles.push({
@@ -403,7 +402,7 @@ const TextRainBubble = () => {
           const sy = cluster.y + c.dy;
           
           if (c.fadeIn !== undefined && c.fadeIn < 1.0) {
-            c.fadeIn += 0.015; // 더 부드럽게 나타남
+            c.fadeIn += 0.05;
             if (c.fadeIn > 1.0) c.fadeIn = 1.0;
           }
           const alphaMult = c.fadeIn !== undefined ? c.fadeIn : 1.0;
@@ -501,7 +500,7 @@ const TextRainBubble = () => {
       // 5. 서서히 사라지는 물방울 렌더링
       for (let i = fadingOutBubbles.length - 1; i >= 0; i--) {
         const b = fadingOutBubbles[i];
-        b.opacity -= 0.015; // 더 부드럽게 사라짐 (기존 0.05)
+        b.opacity -= 0.05;
         if (b.opacity <= 0) {
           fadingOutBubbles.splice(i, 1);
           continue;
