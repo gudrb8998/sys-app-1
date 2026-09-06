@@ -14,8 +14,6 @@ const TextRainBubble = () => {
     canvas.width = width;
     canvas.height = height;
 
-    const targetCenterWords = ['공간', '관객', '구성', '극장', '무용수', '안무', '예술', '움직임', '음악', '창작', '춤', '표현'];
-    
     let clusters = []; 
     let freeBubbles = [];
     
@@ -39,10 +37,8 @@ const TextRainBubble = () => {
             const w2 = parts[1].trim();
             const freq = Number(parts[2].trim());
             
-            if (targetCenterWords.includes(w1)) {
-              if (!data[w1]) data[w1] = [];
-              data[w1].push({ word: w2, freq });
-            }
+            if (!data[w1]) data[w1] = [];
+            data[w1].push({ word: w2, freq });
           }
         });
 
