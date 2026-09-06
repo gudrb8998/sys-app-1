@@ -224,6 +224,29 @@ const TextRainBubble = () => {
         const bubble = freeBubbles[i];
         const target = bubble.targetCluster;
 
+        // target 군집이 이미 해체(circles 비어있음)된 경우 즉시 detachedBubble로 전환
+        if (target.shedSatellites && target.circles.length === 0) {
+          detachedBubbles.push({
+            word: bubble.word,
+            color: bubble.color,
+            radius: bubble.radius,
+            x: bubble.x,
+            y: bubble.y,
+            vy: 0,
+            pulseSpeed: bubble.pulseSpeed,
+            pulsePhase: bubble.pulsePhase,
+            fadeIn: 1.0
+          });
+          freeBubbles.splice(i, 1);
+          continue;
+        }
+
+        // 화면 밖으로 벗어난 freeBubble 제거
+        if (bubble.y > height + 100) {
+          freeBubbles.splice(i, 1);
+          continue;
+        }
+
         const dx = target.x - bubble.x;
         const dy = target.y - bubble.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -264,6 +287,24 @@ const TextRainBubble = () => {
           }
 
           // 닿는 순간 그 자리에서 서서히 사라지도록 fadingOutBubbles에 추가
+          // center circle이 없으면(cluster 해체된 경우) detachedBubble로 즉시 전환
+          const centerCircle = target.circles.find(c => c.isCenter);
+          if (!centerCircle) {
+            detachedBubbles.push({
+              word: bubble.word,
+              color: bubble.color,
+              radius: bubble.radius,
+              x: bubble.x,
+              y: bubble.y,
+              vy: 0,
+              pulseSpeed: bubble.pulseSpeed,
+              pulsePhase: bubble.pulsePhase,
+              fadeIn: 1.0
+            });
+            freeBubbles.splice(i, 1);
+            continue;
+          }
+
           fadingOutBubbles.push({
             word: bubble.word,
             color: bubble.color,
@@ -277,7 +318,7 @@ const TextRainBubble = () => {
 
           // 목표 빈자리로 순간이동하되 투명하게(fadeIn=0) 추가하여 서서히 나타나도록 설정
           const attachAngle = Math.random() * Math.PI * 2;
-          const attachDist = target.circles[0].radius + bubble.radius;
+          const attachDist = centerCircle.radius + bubble.radius;
           
           target.circles.push({
             isCenter: false,
@@ -354,7 +395,8 @@ const TextRainBubble = () => {
         });
 
         // 중심 단어 렌더링
-        const center = cluster.circles[0];
+        const center = cluster.circles.find(c => c.isCenter);
+        if (!center) return; // circles가 비어있으면 렌더링 skip
         const currentScale = 1.0 + Math.sin(timestamp * center.pulseSpeed + center.pulsePhase) * 0.05;
         const currentRadius = center.radius * currentScale;
         
