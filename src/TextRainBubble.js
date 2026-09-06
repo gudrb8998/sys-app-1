@@ -89,7 +89,7 @@ const TextRainBubble = () => {
               isCenter: true, 
               dx: 0, 
               dy: 0, 
-              radius: 35, 
+              radius: 55, 
               word: item.centerWord,
               color: getRandomColor(),
               pulseSpeed: 0.002,
@@ -418,7 +418,7 @@ const TextRainBubble = () => {
         ctx.shadowBlur = 15;
         ctx.shadowColor = center.color;
         ctx.fillStyle = center.color;
-        ctx.font = `bold ${20 * currentScale}px "Malgun Gothic", sans-serif`;
+        ctx.font = `bold ${28 * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(center.word, cluster.x + center.dx, cluster.y + center.dy);
         ctx.shadowBlur = 0;
       });
@@ -451,7 +451,7 @@ const TextRainBubble = () => {
         ctx.shadowColor = b.color;
         ctx.fillStyle = b.color;
         // 단어1(isCenter)은 큰 폰트, 단어2는 작은 폰트
-        const fontSize = b.isCenter ? 20 : 9;
+        const fontSize = b.isCenter ? 28 : 9;
         ctx.font = `${fontSize * currentScale}px "Malgun Gothic", sans-serif`;
         ctx.fillText(b.word, b.x, b.y);
         ctx.shadowBlur = 0;
